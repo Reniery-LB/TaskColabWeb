@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablero</title>
+    <link rel="stylesheet" href="../assets/styles/main.css">
+</head>
+<body>
+    <!-- NAVBAR -->
+    <header class="header">
+        <div class="logo-box-todo">
+            <a href="../index.html">
+            <img src="../assets/img/logo.png" width="30" alt="logo_tareas" class="logo">
+            </a>
+        </div>
+
+        <nav class="nav-container">
+            <div class="nav-links">
+
+                <div class="nav-item dropdown">
+                    <a class="dropdown-toggle">
+                    Tableros <span class="arrow">▼</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="#"><h4>Administración de tableros</h4></a>
+                        <p>Consulta, crea, elimina o edita tus tableros.</p>
+                    </div>
+                </div>
+
+                <div class="nav-item dropdown">
+                    <a class="dropdown-toggle">
+                    Tareas <span class="arrow">▼</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="../view/tareas.html"><h4>Gestionar tareas</h4></a>
+                        <p>Crea, asigna y monitorea tus tareas de forma sencilla.</p>
+                    </div>
+                </div>
+
+                <div class="nav-item dropdown">
+                    <a class="dropdown-toggle">
+                    Usuarios <span class="arrow">▼</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="../view/usuarios.html"><h4>Gestión de usuario</h4></a>
+                        <p>Crea y edita tu usuario dentro de tus tableros.</p>
+                    </div>
+                </div>
+
+                <div class="nav-item dropdown">
+                    <a class="dropdown-toggle">
+                    Reportes <span class="arrow">▼</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="../view/reportes.html"><h4>Panel de reportes</h4></a>
+                        <p>Visualizar el progreso, análiza el rendimiento y mejora la productividad de tu equipo.</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="nav-actions">
+                <a href="../view/login.html" class="login">Iniciar sesión</a>
+                <a href="../view/registro.html">
+                    <button class="btn-primary">Registrarse</button>
+                </a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="title">Tableros</h1>
+            <p class="subtitle">
+                Consulta tus tableros, crealos o editalos facilmente desde un solo lugar.
+            </p>
+            <a href="../view/registro.html">
+                <button class="btn-secondary">Crear tableros</button>
+            </a>
+            
+        </div>
+    </section>
+
+     <!-- WHY SECTION -->
+    <section class="why-tableros">
+        <div class="why-box white-box">
+            <img src="../assets/img/tabla_tableros.png" alt="Imagen de colaboración">
+        </div>
+        <div class="why-box blue-box">
+            <h3>Visualiza tus tareas, distribuye responsabilidades y mantén a tu equipo sincronizado</h3>
+            <img src="../assets/img/sincronizado_tablero.png" alt="imagen de equipo sincronizado">
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features-tableros">
+        <div class="features-grid-tableros">
+            <div>
+                <h3>¿Qué es un tableo en TaskColab?</h3>
+                <p>Un tablero es un espacio visual doned puedes organizar las
+                    tareas de un proyecto en columnas de tres fases.
+                </p>
+            </div>
+            <div class="feature-item-tableros">
+                <p>Pendiente</p>
+                <img src="../assets/img/relojtablero.png" alt="imagen de un reloj">
+            </div>
+            <div class="feature-item-tableros">
+                <p>En proceso</p>
+                <img src="../assets/img/carga_tablero.png" alt="Imagen de proceso">
+            </div>
+            <div class="feature-item-tableros">
+                <p>Completado</p>
+                <img src="../assets/img/completado_tablero.png" alt="Imagen de comentarios">
+            </div>
+        </div>
+        <a href="../view/registro.html">
+            <button class="btn-secondary">Obtener mis tableros</button>
+        </a>
+        
+    </section>
+
+
+
+    <!-- MAIN FEATURES -->
+    <section class="main-features-tableros">
+        <div class="main-features-box">
+            <h3>Así funcionan los tableros en TaskColab</h3>
+            <div class="main-features-steps">
+                <div class="step">
+                    <div class="circle">1</div>
+                    <p>Crea un nuevo tablero con el nombre de tu proyecto.</p>
+                </div>
+                <div class="step">
+                    <div class="circle">2</div>
+                    <p>Agrega columnas según las fases de tu trabajo.</p>
+                </div>
+                <div class="step">
+                    <div class="circle">3</div>
+                    <p>Crea tareas, asígnalas y actualízalas fácilmente.</p>
+                </div>
+                <div class="step">
+                    <div class="circle">4</div>
+                    <p>Observa el avance general de tu equipo desde un solo lugar.</p>
+                </div>
+            </div>
+        </div>
+
+        <a href="../view/registro.html">
+            <button class="btn-primary">Únete a TaskColab hoy</button>
+        </a>
+    </section>
+
+
+    <!-- CTA -->
+    <section class="cta">
+        <p>Empieza a crear tus tableros hoy</p>
+        <p>Registrate gratis y gestionaa tus proyectos en equipo desde cualquier lugar</p>
+        <a href="../view/registro.html">
+            <button class="btn-secondary">Crear cuenta gratis</button>
+        </a>
+        
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <p>© 2025 Task<span class="colab-black">Colab</span> - Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="../assets/javascript/menu.js"></script>
+</body>
+</html>

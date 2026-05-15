@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Iniciar sesión - TaskColab</title>
+  <link rel="stylesheet" href="../assets/styles/main.css" />
+</head>
+<body>
+  <div class="login-background">
+    <header class="logo-header">
+      <a href="../index.html"><img src="../assets/img/logo.png" alt="Logo TaskColab"></a>
+    </header>
+
+    <div class="login-card">
+      <h2>Iniciar sesión</h2>
+
+      <div id="loginMessage"></div>
+
+      <form id="loginForm" action="../assets/app/AppLogin.php" method="post" novalidate>
+        <label for="email">Correo electrónico</label>
+        <input type="email" id="email" name="email" required>
+
+        <div class="login-password-wrapper">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" name="password" required>
+          <span class="login-toggle-password">
+            <!-- SVG por defecto: ojo cerrado -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17.94 17.94A10.97 10.97 0 0 1 12 20c-5 0-9.27-3-11-7 1.01-2.21 2.65-4.13 4.66-5.39"/>
+              <line x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+          </span>
+        </div>
+
+        <button id="loginBtn" type="submit" class="btn-primary">Acceder</button>
+
+        <a href="registro.html" class="register-link">¿No tiene una cuenta?</a>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>© 2025 Task<span class="colab-black">Colab</span> - Todos los derechos reservados.</p>
+  </footer>
+
+  <script src="../assets/javascript/menu.js" defer></script>
+  <script src="../assets/javascript/toasts.js" defer></script>
+  <script src="../assets/javascript/messages.js" defer></script>
+</body>
+</html>
