@@ -64,7 +64,7 @@ $UPLOADS_BASE = $basePath . '/assets/uploads';
       <a href="<?php echo $homeLink; ?>"><img src="<?php echo $imgBase; ?>/logo.png" width="30" alt="logo_tareas" class="logo"></a>
     </div>
     <div class="tab-container">
-      <h2 class="tab">Pestaña 1</h2>
+      <h2 class="tab">Espacio de trabajo</h2>
       <!-- <button class="add-tab">+</button> -->
     </div>
   </div>

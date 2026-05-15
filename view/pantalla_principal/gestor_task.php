@@ -13,35 +13,72 @@
   <main class="main-content">
     <!-- INICIO -->
     <section id="inicio" class="seccion activa">
-      <h2>Bienvenido a <span class="task-blue">Task</span>Colab</h2>
       <?php
       $userName = $_SESSION['user']['name'] ?? 'Invitado';
       ?>
-      <p>¡Bienvenido a tu espacio de trabajo, <?php echo htmlspecialchars($userName, ENT_QUOTES); ?>!</p>
+      <div class="inicio-hero-copy">
+        <span class="inicio-eyebrow">Panel de productividad</span>
+        <h2>Bienvenido a <span class="task-blue">Task</span>Colab</h2>
+        <p>Organiza tu trabajo, revisa pendientes y avanza con tu equipo desde un solo espacio, <?php echo htmlspecialchars($userName, ENT_QUOTES); ?>.</p>
+        <div class="inicio-actions">
+          <button type="button" class="inicio-action primary" data-go-section="tableros">Ver tablero</button>
+          <button type="button" class="inicio-action secondary" data-go-section="formulario-tarea">Nueva tarea</button>
+        </div>
+      </div>
+
+      <div class="inicio-resumen" aria-label="Resumen del tablero">
+        <article class="inicio-stat">
+          <span class="inicio-stat-label">Pendientes</span>
+          <strong id="inicio-pending-count">0</strong>
+        </article>
+        <article class="inicio-stat">
+          <span class="inicio-stat-label">En proceso</span>
+          <strong id="inicio-progress-count">0</strong>
+        </article>
+        <article class="inicio-stat">
+          <span class="inicio-stat-label">Completadas</span>
+          <strong id="inicio-done-count">0</strong>
+        </article>
+      </div>
     </section>
 
     <!-- Sección de tableros -->
     <section id="tableros" class="seccion">
-      <h2 class="titulo-tableros">Mis tableros</h2>
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Flujo Kanban</span>
+          <h2 class="titulo-tableros">Mis tableros</h2>
+        </div>
+        <p id="board-summary">Cargando tareas del tablero...</p>
+      </div>
       <div class="contenedor-tableros">
-        <div class="columna">
+        <div class="columna columna-pending">
           <div class="titulo-columna">
-            <h3>Pendiente</h3>
-            <button class="add-card" data-seccion="pendiente">+</button>
+            <div>
+              <span class="column-kicker">Por iniciar</span>
+              <h3>Pendiente <span class="column-count" data-count-column="pending">0</span></h3>
+            </div>
+            <button class="add-card" data-seccion="pendiente" aria-label="Crear tarjeta pendiente">+</button>
           </div>
           <div class="tarjetas"></div>
         </div>
-        <div class="columna">
+        <div class="columna columna-progress">
           <div class="titulo-columna">
-            <h3>En proceso</h3>
-            <button class="add-card" data-seccion="proceso">+</button>
+            <div>
+              <span class="column-kicker">En marcha</span>
+              <h3>En proceso <span class="column-count" data-count-column="in_progress">0</span></h3>
+            </div>
+            <button class="add-card" data-seccion="proceso" aria-label="Crear tarjeta en proceso">+</button>
           </div>
           <div class="tarjetas"></div>
         </div>
-        <div class="columna">
+        <div class="columna columna-done">
           <div class="titulo-columna">
-            <h3>Completado</h3>
-            <button class="add-card" data-seccion="completado">+</button>
+            <div>
+              <span class="column-kicker">Cerradas</span>
+              <h3>Completado <span class="column-count" data-count-column="done">0</span></h3>
+            </div>
+            <button class="add-card" data-seccion="completado" aria-label="Crear tarjeta completada">+</button>
           </div>
           <div class="tarjetas"></div>
         </div>
