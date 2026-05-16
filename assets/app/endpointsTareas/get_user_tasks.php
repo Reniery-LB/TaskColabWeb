@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 require_once __DIR__ . '/../../models/TaskModel.php';
+require_once __DIR__ . '/../../models/ProjectModel.php';
 
 $user_id = $_SESSION['user']['id'] ?? null;
 if (!$user_id) {
@@ -33,12 +34,21 @@ if (!$user_id) {
 
 try {
     $taskModel = new TaskModel();
+    $projectModel = new ProjectModel();
+    $defaultProject = $projectModel->getOrCreateDefaultProject((int)$user_id);
+    $boardId = isset($_GET['board_id']) ? (int)$_GET['board_id'] : (int)($defaultProject['board_id'] ?? 1);
     $tasks = $taskModel->getUserTasks($user_id);
+    if ($boardId > 0) {
+        $tasks = array_values(array_filter($tasks, function($task) use ($boardId) {
+            return (int)($task['board_id'] ?? 0) === $boardId;
+        }));
+    }
     
     echo json_encode([
         'ok' => true,
         'tasks' => $tasks,
         'count' => count($tasks),
+        'board_id' => $boardId,
         'debug_user_id' => $user_id
     ]);
     

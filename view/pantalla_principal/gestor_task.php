@@ -21,6 +21,7 @@
         <h2>Bienvenido a <span class="task-blue">Task</span>Colab</h2>
         <p>Organiza tu trabajo, revisa pendientes y avanza con tu equipo desde un solo espacio, <?php echo htmlspecialchars($userName, ENT_QUOTES); ?>.</p>
         <div class="inicio-actions">
+          <button type="button" class="inicio-action primary" data-go-section="proyectos">Crear proyecto</button>
           <button type="button" class="inicio-action primary" data-go-section="tableros">Ver tablero</button>
           <button type="button" class="inicio-action secondary" data-go-section="formulario-tarea">Nueva tarea</button>
         </div>
@@ -42,6 +43,116 @@
       </div>
     </section>
 
+    <!-- PROYECTOS -->
+    <section id="proyectos" class="seccion">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Organización</span>
+          <h2 class="titulo">Proyectos</h2>
+        </div>
+        <p>Centraliza tareas, tableros y próximos avances por proyecto.</p>
+      </div>
+
+      <div class="projects-layout">
+        <div class="project-create-panel">
+          <h3>Nuevo proyecto</h3>
+          <form id="form-proyecto">
+            <label for="project-name">Nombre</label>
+            <input id="project-name" name="name" type="text" placeholder="Ej: Rediseño TaskColab Web" required autocomplete="off">
+
+            <label for="project-description">Descripción</label>
+            <textarea id="project-description" name="description" placeholder="Objetivo, alcance o entregables principales"></textarea>
+
+            <div class="project-form-grid">
+              <div>
+                <label for="project-due-date">Fecha objetivo</label>
+                <input id="project-due-date" name="due_date" type="date">
+              </div>
+              <div>
+                <label for="project-color">Color</label>
+                <input id="project-color" name="color" type="color" value="#1B5CFF">
+              </div>
+            </div>
+
+            <button type="submit" class="crear">Crear proyecto</button>
+          </form>
+        </div>
+
+        <div class="project-list-panel">
+          <div class="project-list-header">
+            <h3>Espacios activos</h3>
+            <span id="projects-count">0 proyectos</span>
+          </div>
+
+          <div class="project-control-panel" id="project-control-panel">
+            <div class="project-control-heading">
+              <div>
+                <span class="section-kicker">Proyecto activo</span>
+                <h3 id="project-detail-name">Proyecto general</h3>
+              </div>
+              <span class="project-detail-status" id="project-detail-status">Activo</span>
+            </div>
+            <p id="project-detail-description">Selecciona un proyecto para revisar su avance y editar su información.</p>
+
+            <div class="project-detail-kpis">
+              <div>
+                <span>Total</span>
+                <strong id="project-detail-total">0</strong>
+              </div>
+              <div>
+                <span>En proceso</span>
+                <strong id="project-detail-progress">0</strong>
+              </div>
+              <div>
+                <span>Completadas</span>
+                <strong id="project-detail-done">0</strong>
+              </div>
+              <div>
+                <span>Avance</span>
+                <strong id="project-detail-percent">0%</strong>
+              </div>
+            </div>
+
+            <form id="project-edit-form" class="project-edit-form">
+              <div class="project-form-grid">
+                <div>
+                  <label for="edit-project-name">Nombre</label>
+                  <input id="edit-project-name" name="name" type="text" required autocomplete="off">
+                </div>
+                <div>
+                  <label for="edit-project-status">Estado</label>
+                  <select id="edit-project-status" name="status">
+                    <option value="active">Activo</option>
+                    <option value="paused">Pausado</option>
+                  </select>
+                </div>
+              </div>
+              <label for="edit-project-description">Descripción</label>
+              <textarea id="edit-project-description" name="description"></textarea>
+              <div class="project-form-grid">
+                <div>
+                  <label for="edit-project-due-date">Fecha objetivo</label>
+                  <input id="edit-project-due-date" name="due_date" type="date">
+                </div>
+                <div>
+                  <label for="edit-project-color">Color</label>
+                  <input id="edit-project-color" name="color" type="color" value="#1B5CFF">
+                </div>
+              </div>
+              <div class="project-control-actions">
+                <button type="submit" class="crear">Guardar cambios</button>
+                <button type="button" class="project-archive-btn" id="project-archive-btn">Archivar</button>
+              </div>
+            </form>
+          </div>
+
+          <div id="projects-list" class="projects-grid">
+            <div class="project-empty">Cargando proyectos...</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Sección de tableros -->
     <section id="tableros" class="seccion">
       <div class="section-heading">
@@ -50,6 +161,10 @@
           <h2 class="titulo-tableros">Mis tableros</h2>
         </div>
         <p id="board-summary">Cargando tareas del tablero...</p>
+      </div>
+      <div class="active-project-strip" id="active-project-strip">
+        <span>Proyecto activo</span>
+        <strong id="active-project-name">Proyecto general</strong>
       </div>
       <div class="contenedor-tableros">
         <div class="columna columna-pending">
@@ -836,6 +951,7 @@
   <script src="../../assets/javascript/menu.js" defer></script>
   <script src="../../assets/javascript/admin.js" defer></script>
   <script src="../../assets/javascript/users.js" defer></script>
+  <script src="../../assets/javascript/projects.js" defer></script>
   <script src="../../assets/javascript/tasks.js" defer></script>
   <script src="../../assets/javascript/boards.js" defer></script>
   <script src="../../assets/javascript/reports.js" defer></script>

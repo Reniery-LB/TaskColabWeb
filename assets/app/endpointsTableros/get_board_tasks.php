@@ -25,6 +25,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../models/TaskModel.php';
+require_once __DIR__ . '/../../models/ProjectModel.php';
 
 $user_id = $_SESSION['user']['id'] ?? null;
 if (!$user_id) {
@@ -35,9 +36,25 @@ if (!$user_id) {
 
 try {
     $taskModel = new TaskModel();
+    $projectModel = new ProjectModel();
+    $defaultProject = $projectModel->getOrCreateDefaultProject((int)$user_id);
+    $boardId = isset($_GET['board_id']) ? (int)$_GET['board_id'] : (int)($defaultProject['board_id'] ?? 1);
+
+    if ($boardId <= 0) {
+        $boardId = (int)($defaultProject['board_id'] ?? 1);
+    }
+
+    if (!$projectModel->userCanAccessBoard((int)$user_id, $boardId)) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'message' => 'No tienes acceso a este tablero']);
+        exit;
+    }
     
     // Obtener todas las tareas del usuario
     $allTasks = $taskModel->getUserTasks($user_id);
+    $allTasks = array_values(array_filter($allTasks, function($task) use ($boardId) {
+        return (int)($task['board_id'] ?? 0) === $boardId;
+    }));
     
     // Agrupar por columna (status)
     $board = [
@@ -71,6 +88,7 @@ try {
         'ok' => true,
         'board' => $board,
         'total_tasks' => count($allTasks),
+        'board_id' => $boardId,
         'debug_user_id' => $user_id
     ]);
     

@@ -25,6 +25,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 require_once __DIR__ . '/../../models/TaskModel.php';
+require_once __DIR__ . '/../../models/ProjectModel.php';
 
 $user_id = $_SESSION['user']['id'] ?? null;
 if (!$user_id) {
@@ -54,6 +55,19 @@ if (empty($title)) {
 
 try {
     $taskModel = new TaskModel();
+    $projectModel = new ProjectModel();
+    $defaultProject = $projectModel->getOrCreateDefaultProject((int)$user_id);
+    $boardId = isset($input['board_id']) ? (int)$input['board_id'] : (int)($defaultProject['board_id'] ?? 1);
+
+    if ($boardId <= 0) {
+        $boardId = (int)($defaultProject['board_id'] ?? 1);
+    }
+
+    if (!$projectModel->userCanAccessBoard((int)$user_id, $boardId)) {
+        http_response_code(403);
+        echo json_encode(['ok' => false, 'message' => 'No tienes acceso a este tablero']);
+        exit;
+    }
     
     // Mapear columna a status (en español para TaskModel)
     $statusMap = [
@@ -73,7 +87,7 @@ try {
         'due_date' => $input['due_date'] ?? null,
         'created_by' => $user_id,
         'assigned_to' => $input['assigned_to'] ?? null,
-        'board_id' => $input['board_id'] ?? 1, // Por defecto, tablero 1
+        'board_id' => $boardId,
         'column_created' => $column
     ];
     

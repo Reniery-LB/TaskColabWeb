@@ -1,14 +1,10 @@
 // assets/javascript/menu.js
 document.addEventListener("DOMContentLoaded", () => {
-  // Ocultar la casita y el botón admin inmediatamente al cargar
+  // Ocultar el Home mientras ya estamos en Inicio.
   setTimeout(() => {
     const linkCasita = document.querySelector('.sidebar a[data-section="inicio"]');
-    const botonAdmin = document.querySelector('.sidebar a[data-section="admin"]');
     if (linkCasita) {
       linkCasita.style.display = "none";
-    }
-    if (botonAdmin) {
-      botonAdmin.style.display = "none";
     }
   }, 10);
 
@@ -22,6 +18,25 @@ document.addEventListener("DOMContentLoaded", () => {
   // Hacer mostrarSeccion global para que users.js pueda acceder
   window.mostrarSeccion = (id) => {
     console.log("Mostrando sección:", id);
+    const activeSectionMap = {
+        "formulario-tarjeta": "tableros",
+        "eliminarTarjeta": "tableros",
+        "formulario-tarea": "tareas",
+        "detalle-usuario": "usuarios",
+        "formulario-admin": "admin",
+        "editar-admin": "admin"
+    };
+    const navSectionId = activeSectionMap[id] || id;
+
+    document.querySelectorAll(".sidebar a").forEach((link) => {
+        const isActive = link.dataset.section === navSectionId;
+        link.classList.toggle("active", isActive);
+        if (isActive) {
+            link.setAttribute("aria-current", "page");
+        } else {
+            link.removeAttribute("aria-current");
+        }
+    });
     
     // 1. Ocultar TODAS las secciones
     document.querySelectorAll(".seccion").forEach((s) => {
@@ -49,11 +64,6 @@ document.addEventListener("DOMContentLoaded", () => {
         linkCasita.style.display = (id === "inicio") ? "none" : "flex";
     }
     
-    // Mostrar el botón admin SOLO cuando se clickee "usuarios"
-    const botonAdmin = document.querySelector('.sidebar a[data-section="admin"]');
-    if (botonAdmin) {
-        botonAdmin.style.display = (id === "usuarios") ? "flex" : "none";
-    }
   };
 
   // Hacer configurarAlerta global para que users.js pueda acceder
@@ -446,6 +456,12 @@ document.addEventListener("DOMContentLoaded", () => {
     link.addEventListener("click", (e) => {
       e.preventDefault();
       window.mostrarSeccion(link.dataset.section);
+    });
+  });
+
+  document.querySelectorAll("[data-go-section]").forEach((button) => {
+    button.addEventListener("click", () => {
+      window.mostrarSeccion(button.dataset.goSection);
     });
   });
 

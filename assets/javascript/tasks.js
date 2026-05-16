@@ -24,6 +24,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   console.log("API_BASE Tareas configurado:", apiBase);
 
+  function getActiveBoardId() {
+      return window.TaskColabProjects?.getActiveBoardId?.() || 1;
+  }
+
   // --- CONVERSIÓN DE ESTADOS Y PRIORIDADES ---
   function statusToBackend(status) {
       console.log("Convirtiendo estado frontend a backend:", status);
@@ -89,7 +93,8 @@ document.addEventListener('DOMContentLoaded', function() {
       try {
           console.log('Cargando tareas...');
           const timestamp = new Date().getTime();
-          const url = `${apiBase}/get_user_tasks.php?t=${timestamp}`;
+          const boardId = getActiveBoardId();
+          const url = `${apiBase}/get_user_tasks.php?board_id=${encodeURIComponent(boardId)}&t=${timestamp}`;
           
           const res = await fetch(url, {
               method: 'GET',
@@ -297,7 +302,8 @@ document.addEventListener('DOMContentLoaded', function() {
             assigned_to: usuarioId ? parseInt(usuarioId) : null,
             status: backendStatus,  
             priority: backendPriority, 
-            due_date: fechaLimite || null
+            due_date: fechaLimite || null,
+            board_id: getActiveBoardId()
         };
         
         console.log("Payload para enviar al backend:", payload);
@@ -667,7 +673,8 @@ document.addEventListener('DOMContentLoaded', function() {
   async function loadTasks() {
     try {
       console.log("Cargando tareas...");
-      const res = await fetch(`${apiBase}/list_tasks.php`);
+      const boardId = getActiveBoardId();
+      const res = await fetch(`${apiBase}/list_tasks.php?board_id=${encodeURIComponent(boardId)}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       
       const json = await res.json();
@@ -947,6 +954,11 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log('TASKS: Usuario actualizado', event.detail);
         await loadTasks();
         console.log('Tareas actualizadas después de cambio de usuario');
+    });
+
+    window.addEventListener('taskcolab:projectChanged', async (event) => {
+        console.log('TASKS: Proyecto activo cambiado', event.detail);
+        await loadTasks();
     });
 
     window.addEventListener('usuarioCreado', async (event) => {

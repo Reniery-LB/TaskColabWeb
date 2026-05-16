@@ -56,6 +56,7 @@ $API_BASE = $basePath . '/assets/app/endpoints';
 $API_BASE_PERFIL = $basePath . '/assets/app/endpointsPerfil';
 $API_BASE_TAREAS = $basePath . '/assets/app/endpointsTareas';
 $API_BASE_TABLEROS = $basePath . '/assets/app/endpointsTableros'; 
+$API_BASE_PROJECTS = $basePath . '/assets/app/endpointsProjects';
 $UPLOADS_BASE = $basePath . '/assets/uploads';
 ?>
 <header class="header">
@@ -89,6 +90,7 @@ $UPLOADS_BASE = $basePath . '/assets/uploads';
     window.API_BASE_PERFIL = "<?php echo $API_BASE_PERFIL; ?>";
     window.API_BASE_TAREAS = "<?php echo $API_BASE_TAREAS; ?>";
     window.API_BASE_TABLEROS = "<?php echo $API_BASE_TABLEROS; ?>"; 
+    window.API_BASE_PROJECTS = "<?php echo $API_BASE_PROJECTS; ?>";
     window.UPLOADS_BASE = "<?php echo $UPLOADS_BASE; ?>";
     window.CURRENT_USER = <?php echo json_encode($user ?? null, JSON_UNESCAPED_UNICODE); ?>;
     
@@ -96,20 +98,27 @@ $UPLOADS_BASE = $basePath . '/assets/uploads';
     console.log("API_BASE:", window.API_BASE);
     console.log("API_BASE_TAREAS:", window.API_BASE_TAREAS);
     console.log("API_BASE_TABLEROS:", window.API_BASE_TABLEROS); 
+    console.log("API_BASE_PROJECTS:", window.API_BASE_PROJECTS);
     console.log("API_BASE_PERFIL:", window.API_BASE_PERFIL);
     console.log("=============================");
   </script>
 </header>
 
 <nav class="sidebar">
-  <a href="#" data-section="tableros">Tableros <img src="<?php echo $imgBase; ?>/flecha.png"></a>
-  <a href="#" data-section="tareas">Tareas <img src="<?php echo $imgBase; ?>/flecha.png"></a>
-  <a href="#" data-section="reportes">Reportes <img src="<?php echo $imgBase; ?>/flecha.png"></a>
-  <a href="#" data-section="usuarios">Usuarios <img src="<?php echo $imgBase; ?>/flecha.png"></a>
-  <a href="#" data-section="perfil">Perfil <img src="<?php echo $imgBase; ?>/flecha.png"></a>
-  <a href="#" data-section="inicio" style="display: none !important;"><img src="<?php echo $imgBase; ?>/casita.png" width="30px" height="30px"><img src="<?php echo $imgBase; ?>/flecha.png"></a>
-
+  <a href="#" data-section="proyectos">Proyectos <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
+  <a href="#" data-section="tableros">Tableros <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
+  <a href="#" data-section="tareas">Tareas <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
+  <a href="#" data-section="reportes">Reportes <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
+  <a href="#" data-section="usuarios">Usuarios <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
   <?php if ($isAdmin): ?>
-    <a href="#" data-section="admin">Admin <img src="<?php echo $imgBase; ?>/flecha.png"></a>
+    <a href="#" data-section="admin">Admin <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
   <?php endif; ?>
+  <a href="#" data-section="perfil">Perfil <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
+  <a href="#" data-section="inicio" class="sidebar-home-link">
+    <span class="sidebar-home-icon-wrap">
+      <img class="sidebar-home-icon" src="<?php echo $imgBase; ?>/casita.png" alt="">
+    </span>
+    <span>Home</span>
+    <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt="">
+  </a>
 </nav>

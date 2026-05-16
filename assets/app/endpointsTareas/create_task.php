@@ -14,6 +14,7 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
 }
 
 require_once __DIR__ . '/../../models/TaskModel.php';
+require_once __DIR__ . '/../../models/ProjectModel.php';
 
 try {
     $input = json_decode(file_get_contents('php://input'), true);
@@ -47,7 +48,23 @@ try {
     }
     
     $taskModel = new TaskModel();
+    $projectModel = new ProjectModel();
     $userId = $_SESSION['user']['id'];
+    $defaultProject = $projectModel->getOrCreateDefaultProject((int)$userId);
+    $boardId = isset($input['board_id']) ? (int)$input['board_id'] : (int)($defaultProject['board_id'] ?? 1);
+
+    if ($boardId <= 0) {
+        $boardId = (int)($defaultProject['board_id'] ?? 1);
+    }
+
+    if (!$projectModel->userCanAccessBoard((int)$userId, $boardId)) {
+        http_response_code(403);
+        echo json_encode([
+            'ok' => false,
+            'message' => 'No tienes acceso a este tablero'
+        ]);
+        exit;
+    }
     
     error_log("Datos recibidos en create_task: " . print_r($input, true));
     
@@ -58,7 +75,7 @@ try {
         'status' => isset($input['status']) ? $input['status'] : 'Pendiente',
         'priority' => isset($input['priority']) ? $input['priority'] : 'Media',
         'due_date' => $due_date, // Puede ser null
-        'board_id' => isset($input['board_id']) ? (int)$input['board_id'] : 1,
+        'board_id' => $boardId,
         'created_by' => $userId
     ];
     
