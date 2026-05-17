@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestor de Tareas</title>
-  <link rel="stylesheet" href="../../assets/styles/pantallas.css">
+  <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260516-2">
 </head>
 <body>
   <!-- CONTENIDO PRINCIPAL -->
@@ -378,88 +378,103 @@
 
     <!-- REPORTES -->
     <div id="reportes" class="seccion">
-      <h2 class="titulo-reportes">Reportes</h2>
-      <div class="descripcion-exportar">
-          <p class="descripcion-reportes">Ver métricas y estadísticas generales del sistema.</p>
-          <button id="btn-exportar-pdf" class="btn-exportar">Exportar PDF</button>
+      <div class="reports-hero">
+        <div>
+          <span class="section-kicker">Analítica operativa</span>
+          <h2 class="titulo-reportes">Reportes</h2>
+          <p class="descripcion-reportes">Mide avance, carga del equipo y riesgos próximos con una vista ejecutiva.</p>
+        </div>
+        <button id="btn-exportar-pdf" class="btn-exportar" type="button">Exportar PDF</button>
       </div>
 
-      <div class="tarjetas-metricas">
-        <div class="tarjeta-metrica" data-action="total_tareas">
-          <h3>Total de tareas</h3>
-          <p>0</p>
-        </div>
-        <div class="tarjeta-metrica" data-action="pendiente">
-          <h3>Pendiente</h3>
-          <p>0</p>
-        </div>
-        <div class="tarjeta-metrica" data-action="en_proceso">
-          <h3>En proceso</h3>
-          <p>0</p>
-        </div>
-        <div class="tarjeta-metrica" data-action="completado">
-          <h3>Completado</h3>
-          <p>0</p>
-        </div>
+      <div class="report-kpi-grid">
+        <article class="report-kpi-card" data-action="total_tareas">
+          <span>Total</span>
+          <strong id="report-total-tasks">0</strong>
+          <small>Tareas activas</small>
+        </article>
+        <article class="report-kpi-card accent-green" data-action="completado">
+          <span>Completadas</span>
+          <strong id="report-completed-tasks">0</strong>
+          <small id="report-productivity-label">0% productividad</small>
+        </article>
+        <article class="report-kpi-card accent-red" data-action="atrasadas">
+          <span>Atrasadas</span>
+          <strong id="report-overdue-tasks">0</strong>
+          <small>Requieren atención</small>
+        </article>
+        <article class="report-kpi-card accent-amber" data-action="proximas">
+          <span>Próximas</span>
+          <strong id="report-soon-tasks">0</strong>
+          <small>Vencen en 7 días</small>
+        </article>
+        <article class="report-kpi-card accent-blue" data-action="usuarios">
+          <span>Usuarios activos</span>
+          <strong id="report-active-users">0</strong>
+          <small>Con tareas asignadas</small>
+        </article>
       </div>
 
-      <div class="contenedor-barras">
-        <div class="recuadro">
-          <h3>Progreso por tablero</h3>
-          <div class="barra">
-            <span>Pendiente</span>
-            <div class="barra-contenido">
-              <div class="barra-progreso" style="width: 0%"></div>
+      <div class="reports-grid">
+        <article class="report-panel report-panel-donut">
+          <div class="report-panel-head">
+            <div>
+              <span class="section-kicker">Estado</span>
+              <h3>Distribución de tareas</h3>
             </div>
-            <span class="porcentaje">0%</span>
           </div>
-          <div class="barra">
-            <span>En proceso</span>
-            <div class="barra-contenido">
-              <div class="barra-progreso" style="width: 0%"></div>
-            </div>
-            <span class="porcentaje">0%</span>
+          <div class="chart-box">
+            <canvas id="report-status-chart" aria-label="Distribución por estado"></canvas>
+            <div id="report-status-fallback" class="report-chart-fallback"></div>
           </div>
-          <div class="barra">
-            <span>Completado</span>
-            <div class="barra-contenido">
-              <div class="barra-progreso" style="width: 0%"></div>
-            </div>
-            <span class="porcentaje">0%</span>
-          </div>
-        </div>
+          <div id="report-status-legend" class="report-legend"></div>
+        </article>
 
-        <div class="recuadro">
-          <h3>Usuarios activos</h3>
-          <div class="barra">
-            <span>Zahir Fernando</span>
-            <div class="barra-contenido">
-              <div class="barra-progreso" style="width: 0%"></div>
+        <article class="report-panel">
+          <div class="report-panel-head">
+            <div>
+              <span class="section-kicker">Equipo</span>
+              <h3>Tareas por usuario</h3>
             </div>
-            <span class="porcentaje">0%</span>
           </div>
-          <div class="barra">
-            <span>Reniery Lucero</span>
-            <div class="barra-contenido">
-              <div class="barra-progreso" style="width: 0%"></div>
-            </div>
-            <span class="porcentaje">0%</span>
+          <div class="chart-box chart-box-bars">
+            <canvas id="report-users-chart" aria-label="Tareas por usuario"></canvas>
           </div>
-          <div class="barra">
-            <span>Keyra Yariely</span>
-            <div class="barra-contenido">
-              <div class="barra-progreso" style="width: 0%"></div>
-            </div>
-            <span class="porcentaje">0%</span>
-          </div>
-        </div>
-      </div>
+          <div id="report-users-list" class="report-bars-list"></div>
+        </article>
 
-      <div class="recuadro tareas-atrasadas">
-        <h3>Tareas atrasadas</h3>
-        <div class="contenido-atrasadas">
-          <p>Cargando tareas atrasadas...</p>
-        </div>
+        <article class="report-panel report-panel-wide">
+          <div class="report-panel-head">
+            <div>
+              <span class="section-kicker">Ritmo</span>
+              <h3>Completadas por semana</h3>
+            </div>
+          </div>
+          <div class="chart-box chart-box-wide">
+            <canvas id="report-weekly-chart" aria-label="Tareas completadas por semana"></canvas>
+          </div>
+          <div id="report-weekly-list" class="report-bars-list"></div>
+        </article>
+
+        <article class="report-panel report-panel-wide">
+          <div class="report-panel-head">
+            <div>
+              <span class="section-kicker">Carga</span>
+              <h3>Prioridad por vencimiento</h3>
+            </div>
+          </div>
+          <div id="report-priority-heatmap" class="report-heatmap"></div>
+        </article>
+
+        <article class="report-panel report-panel-wide report-alerts-panel">
+          <div class="report-panel-head">
+            <div>
+              <span class="section-kicker">Riesgos</span>
+              <h3>Alertas de tareas</h3>
+            </div>
+          </div>
+          <div id="report-alerts-table" class="report-alerts-table"></div>
+        </article>
       </div>
     </div>
 
@@ -1001,7 +1016,8 @@
   <script src="../../assets/javascript/projects.js" defer></script>
   <script src="../../assets/javascript/tasks.js" defer></script>
   <script src="../../assets/javascript/boards.js" defer></script>
-  <script src="../../assets/javascript/reports.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <script src="../../assets/javascript/reports.js?v=20260516-2" defer></script>
   <script src="../../assets/javascript/chat.js" defer></script>
   <script src="../../assets/javascript/profile.js" defer></script>
 </body>

@@ -1,419 +1,454 @@
 class ReportsManager {
-    // assets/javascript/reports.js
-    constructor() {
-        this.baseUrl = window.API_BASE ? window.API_BASE.replace('/endpoints', '/endpointsReportes') : '/PROYECTO_GESTOR_TAREAS/assets/app/endpointsReportes';
-        console.log('ReportsManager inicializado. Base URL:', this.baseUrl);
-        this.init();
+  constructor() {
+    this.baseUrl = window.API_BASE
+      ? window.API_BASE.replace('/endpoints', '/endpointsReportes')
+      : '/PROYECTO_GESTOR_TAREAS/assets/app/endpointsReportes';
+    this.charts = {};
+    this.latestData = null;
+    this.isLoading = false;
+    this.init();
+  }
+
+  init() {
+    this.setupEventListeners();
+    this.loadDashboardStats();
+  }
+
+  setupEventListeners() {
+    const exportBtn = document.getElementById('btn-exportar-pdf');
+    exportBtn?.addEventListener('click', (event) => {
+      event.preventDefault();
+
+      const exportNow = () => this.exportToPDF();
+      if (window.configurarAlerta) {
+        window.configurarAlerta(
+          'Exportar PDF',
+          '¿Generar un reporte ejecutivo con el estado actual del tablero?',
+          'alerta',
+          { textoConfirmar: 'Exportar', onConfirmar: exportNow }
+        );
+      } else {
+        exportNow();
+      }
+    });
+
+    document.querySelectorAll('.report-kpi-card').forEach((card) => {
+      card.addEventListener('click', () => this.navigateFromStats(card.dataset.action));
+    });
+  }
+
+  async loadDashboardStats() {
+    if (this.isLoading) return;
+
+    try {
+      this.isLoading = true;
+      this.setLoadingState(true);
+      const response = await fetch(`${this.baseUrl}/get_dashboard_stats.php?t=${Date.now()}`, {
+        credentials: 'include',
+        cache: 'no-cache'
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'No se pudieron cargar los reportes');
+      }
+
+      this.latestData = result.data;
+      this.renderDashboard(result.data);
+    } catch (error) {
+      console.error('Error cargando reportes:', error);
+      this.showToast('Error al cargar reportes', 'error');
+      this.renderDashboard(this.fallbackData());
+    } finally {
+      this.setLoadingState(false);
+      this.isLoading = false;
+    }
+  }
+
+  renderDashboard(data) {
+    const stats = data.general_stats || {};
+    this.setText('report-total-tasks', stats.total_tareas || 0);
+    this.setText('report-completed-tasks', stats.completado || 0);
+    this.setText('report-overdue-tasks', stats.atrasadas || 0);
+    this.setText('report-soon-tasks', stats.proximas || 0);
+    this.setText('report-active-users', stats.usuarios_activos || 0);
+    this.setText('report-productivity-label', `${stats.productividad || 0}% productividad`);
+
+    this.renderStatusChart(data.state_distribution || data.board_progress || []);
+    this.renderUsersChart(data.active_users || []);
+    this.renderWeeklyChart(data.completed_by_week || []);
+    this.renderHeatmap(data.priority_heatmap || { buckets: [], rows: [] });
+    this.renderAlerts(data.alert_tasks || data.overdue_tasks || []);
+    this.queueChartsResize();
+  }
+
+  renderStatusChart(rows) {
+    const labels = rows.map(item => item.status_display);
+    const values = rows.map(item => Number(item.total_tasks || 0));
+    const colors = ['#f59e0b', '#1b5cff', '#16a34a'];
+    const canvas = document.getElementById('report-status-chart');
+    const fallback = document.getElementById('report-status-fallback');
+    const legend = document.getElementById('report-status-legend');
+
+    if (legend) {
+      legend.innerHTML = rows.map((item, index) => `
+        <span><i style="background:${colors[index] || '#64748b'}"></i>${escapeHtml(item.status_display)} · ${item.total_tasks}</span>
+      `).join('');
     }
 
-    init() {
-        this.setupEventListeners();
-        this.loadDashboardStats();
+    if (!window.Chart || !canvas) {
+      this.renderDonutFallback(fallback, values, colors);
+      if (canvas) canvas.style.display = 'none';
+      return;
     }
 
-    setupEventListeners() {
-        console.log('🔧 Inicializando event listeners...');
-        
-        // BOTÓN EXPORTAR PDF
-        const exportBtn = document.getElementById('btn-exportar-pdf');
-        if (exportBtn) {
-            console.log('Botón Exportar PDF encontrado');
-            exportBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                console.log('Click en Exportar PDF');
-                
-                if (window.configurarAlerta) {
-                    window.configurarAlerta(
-                        'Exportar PDF',
-                        '¿Estás seguro de que deseas exportar el reporte a PDF?',
-                        'alerta',
-                        {
-                            textoConfirmar: 'Exportar',
-                            onConfirmar: () => {
-                                console.log('Usuario confirmó exportación');
-                                this.exportToPDF();
-                            },
-                            onCancelar: () => {
-                                console.log('Usuario canceló exportación');
-                                this.showToast('Exportación cancelada', 'info');
-                            }
-                        }
-                    );
-                } else {
-                    this.exportToPDF();
-                }
-            });
-        } else {
-            console.error('Botón Exportar PDF NO encontrado');
+    if (fallback) fallback.innerHTML = '';
+    canvas.style.display = 'block';
+    this.destroyChart('status');
+    this.charts.status = new Chart(canvas, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: values,
+          backgroundColor: colors,
+          borderColor: '#ffffff',
+          borderWidth: 4,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        cutout: '68%',
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} tareas` } }
         }
+      }
+    });
+    this.queueChartsResize();
+  }
 
-        // NAVEGACIÓN DESDE ESTADÍSTICAS
-        document.querySelectorAll('.tarjeta-metrica').forEach((card, index) => {
-            card.addEventListener('click', () => {
-                console.log(`Click en tarjeta métrica [${index}]`);
-                this.navigateFromStats(index);
-            });
-            
-            card.style.cursor = 'pointer';
-            card.style.transition = 'all 0.3s ease';
-            
-            card.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-2px)';
-                this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.15)';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-                this.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
-            });
-        });
-    }
+  renderUsersChart(users) {
+    const labels = users.map(user => user.usuario);
+    const assigned = users.map(user => Number(user.tareas_asignadas || 0));
+    const completed = users.map(user => Number(user.tareas_completadas || 0));
+    const canvas = document.getElementById('report-users-chart');
+    const list = document.getElementById('report-users-list');
+    this.setChartBoxHeight(canvas, Math.min(Math.max(labels.length * 46 + 92, 300), 520));
 
-    async loadDashboardStats() {
-        try {
-            console.log('Cargando estadísticas del dashboard...');
-            const url = `${this.baseUrl}/get_dashboard_stats.php`;
-            console.log('URL de petición:', url);
-            
-            const response = await fetch(url, {
-                credentials: 'include'
-            });
-            
-            console.log('Response status:', response.status, response.statusText);
-            
-            if (!response.ok) {
-                console.error(`Error HTTP: ${response.status}`);
-                this.showFallbackData();
-                return;
-            }
-            
-            const responseText = await response.text();
-            
-            // Verificar si es JSON válido
-            if (!responseText.trim().startsWith('{') && !responseText.trim().startsWith('[')) {
-                console.error('La respuesta no es JSON válido:', responseText.substring(0, 200));
-                this.showFallbackData();
-                return;
-            }
-            
-            const result = JSON.parse(responseText);
-            console.log('Datos recibidos correctamente');
-
-            if (result.success) {
-                this.updateGeneralStats(result.data.general_stats);
-                this.updateBoardProgress(result.data.board_progress);
-                this.updateActiveUsers(result.data.active_users);
-                this.updateOverdueTasks(result.data.overdue_tasks);
-                this.showToast('Estadísticas cargadas correctamente', 'success');
-            } else {
-                throw new Error(result.error || 'Error desconocido');
-            }
-        } catch (error) {
-            console.error('Error cargando estadísticas:', error);
-            this.showToast('Error al cargar estadísticas', 'error');
-            this.showFallbackData();
-        }
-    }
-
-    showFallbackData() {
-        console.log('Mostrando datos de ejemplo como fallback');
-        
-        const exampleStats = {
-            total_tareas: 0,
-            pendiente: 0,
-            en_proceso: 0,
-            completado: 0
-        };
-        
-        this.updateGeneralStats(exampleStats);
-        
-        const realProgress = [
-            { status_display: 'Pendiente', percentage: 0 },
-            { status_display: 'En Proceso', percentage: 0 },
-            { status_display: 'Completado', percentage: 0 }
-        ];
-        
-        this.updateBoardProgress(realProgress);
-        this.updateActiveUsers([]);
-        this.updateOverdueTasks([]);
-    }
-
-    updateGeneralStats(stats) {
-        console.log('Actualizando estadísticas generales:', stats);
-        
-        const metricCards = document.querySelectorAll('.tarjeta-metrica p');
-        if (metricCards.length >= 4) {
-            metricCards[0].textContent = stats.total_tareas || 0;
-            metricCards[1].textContent = stats.pendiente || 0;
-            metricCards[2].textContent = stats.en_proceso || 0;
-            metricCards[3].textContent = stats.completado || 0;
-        }
-    }
-
-    updateBoardProgress(progress) {
-        console.log('Actualizando progreso del tablero:', progress);
-        const container = document.querySelector('.contenedor-barras .recuadro:first-child');
-        if (!container) return;
-
-        let barsHtml = '';
-        
-        if (progress && progress.length > 0) {
-            progress.forEach(item => {
-                const percentage = Math.round(item.percentage || 0);
-                barsHtml += `
-                    <div class="barra">
-                        <span>${item.status_display || item.status}</span>
-                        <div class="barra-contenido">
-                            <div class="barra-progreso" style="width: ${percentage}%"></div>
-                        </div>
-                        <span class="porcentaje">${percentage}%</span>
-                    </div>
-                `;
-            });
-        } else {
-            barsHtml = `
-                <div class="barra">
-                    <span>Pendiente</span>
-                    <div class="barra-contenido">
-                        <div class="barra-progreso" style="width: 0%"></div>
-                    </div>
-                    <span class="porcentaje">0%</span>
-                </div>
-                <div class="barra">
-                    <span>En proceso</span>
-                    <div class="barra-contenido">
-                        <div class="barra-progreso" style="width: 0%"></div>
-                    </div>
-                    <span class="porcentaje">0%</span>
-                </div>
-                <div class="barra">
-                    <span>Completado</span>
-                    <div class="barra-contenido">
-                        <div class="barra-progreso" style="width: 0%"></div>
-                    </div>
-                    <span class="porcentaje">0%</span>
-                </div>
-            `;
-        }
-
-        const title = container.querySelector('h3');
-        container.innerHTML = '';
-        if (title) container.appendChild(title);
-        container.innerHTML += barsHtml;
-    }
-
-    updateActiveUsers(users) {
-        console.log('Actualizando usuarios activos:', users);
-        const container = document.querySelector('.contenedor-barras .recuadro:last-child');
-        if (!container) return;
-
-        let barsHtml = '';
-        
-        if (users && users.length > 0) {
-            users.forEach(user => {
-                const percentage = Math.round(user.porcentaje || 0);
-                barsHtml += `
-                    <div class="barra">
-                        <span>${user.usuario}</span>
-                        <div class="barra-contenido">
-                            <div class="barra-progreso" style="width: ${percentage}%"></div>
-                        </div>
-                        <span class="porcentaje">${percentage}%</span>
-                    </div>
-                `;
-            });
-        } else {
-            barsHtml = `
-                <div class="barra">
-                    <span>No hay usuarios activos</span>
-                    <div class="barra-contenido">
-                        <div class="barra-progreso" style="width: 0%"></div>
-                    </div>
-                    <span class="porcentaje">0%</span>
-                </div>
-            `;
-        }
-
-        const title = container.querySelector('h3');
-        container.innerHTML = '';
-        if (title) container.appendChild(title);
-        container.innerHTML += barsHtml;
-    }
-
-    updateOverdueTasks(tasks) {
-        console.log('Actualizando tareas atrasadas:', tasks);
-        const container = document.querySelector('.contenido-atrasadas');
-        if (!container) return;
-
-        if (!tasks || tasks.length === 0) {
-            container.innerHTML = `
-                <p>¡En este momento no se encuentran tareas atrasadas!</p>
-                <img src="/PROYECTO_GESTOR_TAREAS/assets/img/like.png" alt="Like" class="icono-like">
-            `;
-            return;
-        }
-
-        let tasksHtml = `
-            <div class="lista-tareas-atrasadas">
-                <table style="width: 100%; border-collapse: collapse;">
-                    <thead>
-                        <tr style="background: #f8f9fa;">
-                            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Tarea</th>
-                            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Fecha Límite</th>
-                            <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Prioridad</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+    if (list) {
+      const max = Math.max(...assigned, 1);
+      list.innerHTML = users.length ? users.map(user => {
+        const value = Number(user.tareas_asignadas || 0);
+        return `
+          <div class="report-user-row">
+            <div><strong>${escapeHtml(user.usuario)}</strong><span>${value} asignadas · ${user.tareas_completadas || 0} completadas</span></div>
+            <div class="report-mini-track"><i style="width:${Math.round((value / max) * 100)}%"></i></div>
+          </div>
         `;
+      }).join('') : '<div class="report-empty">Sin tareas asignadas todavía.</div>';
+    }
 
-        // Eliminar duplicados por ID
-        const uniqueTasks = [];
-        const seenIds = new Set();
-        
-        tasks.forEach(task => {
-            if (!seenIds.has(task.id)) {
-                seenIds.add(task.id);
-                uniqueTasks.push(task);
-            }
-        });
+    if (!window.Chart || !canvas) {
+      if (canvas) canvas.style.display = 'none';
+      return;
+    }
 
-        uniqueTasks.forEach(task => {
-            let dueDate;
-            if (task.due_date_display) {
-                dueDate = task.due_date_display;
-            } else {
-                const dateObj = new Date(task.due_date);
-                dueDate = dateObj.toLocaleDateString('es-ES', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                });
-            }
-            
-            const priorityMap = {
-                'high': 'Alta',
-                'medium': 'Media', 
-                'low': 'Baja'
-            };
-            const priorityText = task.priority_display || priorityMap[task.priority] || task.priority;
-            const priorityClass = task.priority === 'high' ? 'style="color: #dc3545; font-weight: bold;"' : '';
+    canvas.style.display = 'block';
+    this.destroyChart('users');
+    this.charts.users = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Asignadas',
+            data: assigned,
+            backgroundColor: '#1b5cff',
+            borderRadius: 8,
+            barThickness: 12,
+            maxBarThickness: 16
+          },
+          {
+            label: 'Completadas',
+            data: completed,
+            backgroundColor: '#16a34a',
+            borderRadius: 8,
+            barThickness: 12,
+            maxBarThickness: 16
+          }
+        ]
+      },
+      options: this.chartScaffold({ indexAxis: 'y' })
+    });
+    this.queueChartsResize();
+  }
 
-            tasksHtml += `
-                <tr style="border-bottom: 1px solid #dee2e6;">
-                    <td style="padding: 10px;">${task.title}</td>
-                    <td style="padding: 10px; color: #dc3545; font-weight: bold;">${dueDate}</td>
-                    <td style="padding: 10px;" ${priorityClass}>${priorityText}</td>
-                </tr>
-            `;
-        });
-
-        tasksHtml += `
-                    </tbody>
-                </table>
-            </div>
+  renderWeeklyChart(weeks) {
+    const canvas = document.getElementById('report-weekly-chart');
+    const list = document.getElementById('report-weekly-list');
+    this.setChartBoxHeight(canvas, 340);
+    if (list) {
+      const max = Math.max(...weeks.map(week => Number(week.total || 0)), 1);
+      list.innerHTML = weeks.length ? weeks.map(week => {
+        const value = Number(week.total || 0);
+        return `
+          <div class="report-user-row">
+            <div><strong>${escapeHtml(week.label)}</strong><span>${value} completadas</span></div>
+            <div class="report-mini-track"><i style="width:${Math.round((value / max) * 100)}%"></i></div>
+          </div>
         `;
-
-        container.innerHTML = tasksHtml;
+      }).join('') : '<div class="report-empty">Aún no hay tareas completadas por semana.</div>';
     }
 
-    navigateFromStats(cardIndex) {
-        const menuManager = window.menuManager;
-        if (!menuManager) {
-            console.error('MenuManager no encontrado');
-            return;
-        }
-
-        switch(cardIndex) {
-            case 0:
-                menuManager.showSection('tareas');
-                break;
-            case 1:
-            case 2:  
-            case 3:
-                menuManager.showSection('tableros');
-                break;
-        }
+    if (!window.Chart || !canvas) {
+      if (canvas) canvas.style.display = 'none';
+      return;
     }
 
-    async exportToPDF() {
-        try {
-            this.showToast('Generando PDF...', 'info');
-            console.log('Iniciando exportación PDF...');
-            
-            const url = `${this.baseUrl}/export_pdf.php`;
-            console.log('URL del PDF:', url);
-            
-            // Abrir en nueva ventana
-            window.open(url, '_blank');
-            
-            setTimeout(() => {
-                this.showToast('PDF generado exitosamente', 'success');
-            }, 1500);
-            
-        } catch (error) {
-            console.error('Error exporting PDF:', error);
-            this.showToast('Error al exportar PDF: ' + error.message, 'error');
-        }
+    canvas.style.display = 'block';
+
+    this.destroyChart('weekly');
+    this.charts.weekly = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: weeks.map(week => week.label),
+        datasets: [{
+          label: 'Completadas',
+          data: weeks.map(week => Number(week.total || 0)),
+          borderColor: '#1b5cff',
+          backgroundColor: 'rgba(27, 92, 255, 0.16)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#ffffff',
+          pointBorderColor: '#1b5cff',
+          pointBorderWidth: 3,
+          pointRadius: 4
+        }]
+      },
+      options: this.chartScaffold()
+    });
+    this.queueChartsResize();
+  }
+
+  renderHeatmap(heatmap) {
+    const container = document.getElementById('report-priority-heatmap');
+    if (!container) return;
+
+    const buckets = heatmap.buckets || [];
+    const rows = heatmap.rows || [];
+    const max = Math.max(
+      1,
+      ...rows.flatMap(row => (row.cells || []).map(cell => Number(cell.value || 0)))
+    );
+
+    container.innerHTML = `
+      <div class="report-heatmap-head">
+        <span></span>
+        ${buckets.map(bucket => `<strong>${escapeHtml(bucket)}</strong>`).join('')}
+      </div>
+      ${rows.map(row => `
+        <div class="report-heatmap-row">
+          <strong>${escapeHtml(row.label)}</strong>
+          ${(row.cells || []).map(cell => {
+            const intensity = Math.max(0.08, Number(cell.value || 0) / max);
+            return `<span style="--heat:${intensity}" title="${escapeHtml(row.label)} · ${escapeHtml(cell.label)}: ${cell.value}">${cell.value}</span>`;
+          }).join('')}
+        </div>
+      `).join('')}
+    `;
+  }
+
+  renderAlerts(tasks) {
+    const container = document.getElementById('report-alerts-table');
+    if (!container) return;
+
+    if (!tasks.length) {
+      container.innerHTML = '<div class="report-empty">Sin alertas críticas por ahora.</div>';
+      return;
     }
 
-    showToast(message, type = 'info') {
-        if (window.showToast) {
-            window.showToast(message, type);
-        } else {
-            console.log(`Toast (${type}): ${message}`);
-            // Toast simple como fallback
-            const toast = document.createElement('div');
-            toast.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 12px 20px;
-                background: ${type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#17a2b8'};
-                color: white;
-                border-radius: 4px;
-                z-index: 10000;
-                font-family: Arial, sans-serif;
-            `;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    document.body.removeChild(toast);
-                }
-            }, 3000);
+    container.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Alerta</th>
+            <th>Tarea</th>
+            <th>Responsable</th>
+            <th>Fecha</th>
+            <th>Prioridad</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tasks.map(task => `
+            <tr>
+              <td><span class="alert-pill alert-${escapeHtml(task.alert_type || 'priority')}">${escapeHtml(task.alert_label || 'Alerta')}</span></td>
+              <td><strong>${escapeHtml(task.title)}</strong><small>${escapeHtml(task.board_title || 'Sin tablero')}</small></td>
+              <td>${escapeHtml(task.assigned_users || 'Sin asignar')}</td>
+              <td>${escapeHtml(task.due_date_display || 'Sin fecha')}</td>
+              <td>${escapeHtml(task.priority_display || task.priority)}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+
+  renderDonutFallback(container, values, colors) {
+    if (!container) return;
+    const total = values.reduce((sum, value) => sum + value, 0);
+    let cursor = 0;
+    const stops = values.map((value, index) => {
+      const start = total > 0 ? (cursor / total) * 100 : 0;
+      cursor += value;
+      const end = total > 0 ? (cursor / total) * 100 : 0;
+      return `${colors[index]} ${start}% ${end}%`;
+    }).join(', ');
+
+    container.innerHTML = `<div class="css-donut" style="background: conic-gradient(${stops || '#dbe6f7 0 100%'});"><span>${total}</span></div>`;
+  }
+
+  chartScaffold(extra = {}) {
+    const isHorizontal = extra.indexAxis === 'y';
+
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      resizeDelay: 80,
+      ...extra,
+      plugins: {
+        legend: {
+          labels: { boxWidth: 10, color: '#64748b', font: { family: 'Poppins' } }
+        },
+        tooltip: { backgroundColor: '#172033', padding: 10 }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          grace: '12%',
+          grid: { color: 'rgba(100, 116, 139, 0.12)' },
+          ticks: { color: '#64748b', precision: 0 }
+        },
+        y: {
+          grid: { display: false },
+          ticks: { color: '#64748b', autoSkip: !isHorizontal }
         }
+      }
+    };
+  }
+
+  setChartBoxHeight(canvas, height) {
+    const box = canvas?.closest('.chart-box');
+    if (box) box.style.height = `${height}px`;
+  }
+
+  queueChartsResize() {
+    const raf = window.requestAnimationFrame || ((callback) => window.setTimeout(callback, 16));
+    raf(() => {
+      raf(() => {
+        Object.values(this.charts).forEach((chart) => chart.resize());
+      });
+    });
+  }
+
+  navigateFromStats(action) {
+    if (action === 'usuarios') {
+      window.mostrarSeccion?.('usuarios');
+    } else if (action) {
+      window.mostrarSeccion?.('tableros');
     }
+  }
+
+  exportToPDF() {
+    this.showToast('Generando PDF moderno...', 'info');
+    window.open(`${this.baseUrl}/export_pdf.php`, '_blank');
+  }
+
+  fallbackData() {
+    return {
+      general_stats: {
+        total_tareas: 0,
+        pendiente: 0,
+        en_proceso: 0,
+        completado: 0,
+        atrasadas: 0,
+        proximas: 0,
+        productividad: 0,
+        usuarios_activos: 0
+      },
+      state_distribution: [
+        { status: 'pending', status_display: 'Pendiente', total_tasks: 0, percentage: 0 },
+        { status: 'in_progress', status_display: 'En proceso', total_tasks: 0, percentage: 0 },
+        { status: 'done', status_display: 'Completado', total_tasks: 0, percentage: 0 }
+      ],
+      active_users: [],
+      completed_by_week: [],
+      priority_heatmap: { buckets: ['Atrasadas', 'Hoy', '7 días', 'Después', 'Sin fecha'], rows: [] },
+      alert_tasks: []
+    };
+  }
+
+  setText(id, value) {
+    const node = document.getElementById(id);
+    if (node) node.textContent = value;
+  }
+
+  setLoadingState(isLoading) {
+    document.getElementById('reportes')?.classList.toggle('reports-loading', isLoading);
+  }
+
+  destroyChart(key) {
+    if (this.charts[key]) {
+      this.charts[key].destroy();
+      delete this.charts[key];
+    }
+  }
+
+  showToast(message, type = 'info') {
+    if (window.showToast) {
+      window.showToast(message, type);
+      return;
+    }
+    console.log(`Toast (${type}): ${message}`);
+  }
 }
 
-// Inicialización
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM cargado - Configurando ReportsManager');
-    
-    const reportesSection = document.getElementById('reportes');
-    if (reportesSection && reportesSection.classList.contains('activa')) {
-        window.reportsManager = new ReportsManager();
-        console.log('ReportsManager inicializado en carga inicial');
+document.addEventListener('DOMContentLoaded', () => {
+  const reportesSection = document.getElementById('reportes');
+  if (!reportesSection) return;
+
+  let wasActive = reportesSection.classList.contains('activa');
+
+  const ensureReports = () => {
+    if (!reportesSection.classList.contains('activa')) return;
+    if (!window.reportsManager) {
+      window.reportsManager = new ReportsManager();
+    } else {
+      window.reportsManager.loadDashboardStats();
     }
-    
-    // Observar cambios de sección
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                const reportesSection = document.getElementById('reportes');
-                if (reportesSection && reportesSection.classList.contains('activa')) {
-                    if (!window.reportsManager) {
-                        window.reportsManager = new ReportsManager();
-                        console.log('ReportsManager inicializado por cambio de sección');
-                    } else {
-                        window.reportsManager.loadDashboardStats();
-                    }
-                }
-            }
-        });
-    });
-    
-    if (reportesSection) {
-        observer.observe(reportesSection, { attributes: true });
+  };
+
+  ensureReports();
+
+  const observer = new MutationObserver(() => {
+    const isActive = reportesSection.classList.contains('activa');
+    if (isActive && !wasActive) {
+      ensureReports();
     }
+    wasActive = isActive;
+  });
+  observer.observe(reportesSection, { attributes: true, attributeFilter: ['class'] });
 });
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
