@@ -245,14 +245,26 @@ class ProjectModel {
         $stmt = $this->conn->prepare("
             SELECT COUNT(*)
             FROM projects p
-            INNER JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = :user_id
+            LEFT JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = :member_user_id
             WHERE p.id = :project_id
               AND p.status <> 'archived'
-              AND (p.owner_id = :user_id OR pm.role_in_project IN ('owner', 'admin'))
+              AND (
+                p.owner_id = :owner_user_id
+                OR pm.role_in_project IN ('owner', 'admin')
+                OR EXISTS (
+                    SELECT 1
+                    FROM users admin_user
+                    WHERE admin_user.id = :admin_user_id
+                      AND admin_user.is_admin = 1
+                      AND admin_user.is_active = 1
+                )
+              )
         ");
         $stmt->execute([
             ':project_id' => $projectId,
-            ':user_id' => $userId
+            ':member_user_id' => $userId,
+            ':owner_user_id' => $userId,
+            ':admin_user_id' => $userId
         ]);
 
         return (int)$stmt->fetchColumn() > 0;
@@ -381,14 +393,28 @@ class ProjectModel {
         $stmt = $this->conn->prepare("
             SELECT COUNT(*)
             FROM boards b
-            LEFT JOIN project_members pm ON pm.project_id = b.project_id AND pm.user_id = :user_id
-            LEFT JOIN board_members bm ON bm.board_id = b.id AND bm.user_id = :user_id
+            LEFT JOIN project_members pm ON pm.project_id = b.project_id AND pm.user_id = :project_member_user_id
+            LEFT JOIN board_members bm ON bm.board_id = b.id AND bm.user_id = :board_member_user_id
             WHERE b.id = :board_id
-              AND (b.owner_id = :user_id OR pm.user_id IS NOT NULL OR bm.user_id IS NOT NULL)
+              AND (
+                b.owner_id = :owner_user_id
+                OR pm.user_id IS NOT NULL
+                OR bm.user_id IS NOT NULL
+                OR EXISTS (
+                    SELECT 1
+                    FROM users admin_user
+                    WHERE admin_user.id = :admin_user_id
+                      AND admin_user.is_admin = 1
+                      AND admin_user.is_active = 1
+                )
+              )
         ");
         $stmt->execute([
-            ':user_id' => $userId,
-            ':board_id' => $boardId
+            ':project_member_user_id' => $userId,
+            ':board_member_user_id' => $userId,
+            ':board_id' => $boardId,
+            ':owner_user_id' => $userId,
+            ':admin_user_id' => $userId
         ]);
 
         return (int)$stmt->fetchColumn() > 0;

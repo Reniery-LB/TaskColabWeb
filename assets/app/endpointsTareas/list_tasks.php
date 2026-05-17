@@ -1,6 +1,8 @@
 <?php
 // assets/app/endpointsTareas/list_tasks.php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 header('Content-Type: application/json');
 
 // Verificar sesión usando la estructura correcta
