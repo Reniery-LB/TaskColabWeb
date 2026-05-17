@@ -57,6 +57,7 @@ $API_BASE_PERFIL = $basePath . '/assets/app/endpointsPerfil';
 $API_BASE_TAREAS = $basePath . '/assets/app/endpointsTareas';
 $API_BASE_TABLEROS = $basePath . '/assets/app/endpointsTableros'; 
 $API_BASE_PROJECTS = $basePath . '/assets/app/endpointsProjects';
+$API_BASE_CHAT = $basePath . '/assets/app/endpointsChat';
 $UPLOADS_BASE = $basePath . '/assets/uploads';
 ?>
 <header class="header">
@@ -71,6 +72,10 @@ $UPLOADS_BASE = $basePath . '/assets/uploads';
   </div>
 
   <div class="user-info">
+    <button type="button" class="header-chat-button" data-go-section="chat" aria-label="Abrir chats">
+      <span class="header-chat-icon" aria-hidden="true"></span>
+      <span>Chats</span>
+    </button>
     <h3><?php echo htmlspecialchars($userName, ENT_QUOTES); ?></h3>
     <div class="profile-circle">
         <?php if (!empty($avatarUrl)): ?>
@@ -91,6 +96,7 @@ $UPLOADS_BASE = $basePath . '/assets/uploads';
     window.API_BASE_TAREAS = "<?php echo $API_BASE_TAREAS; ?>";
     window.API_BASE_TABLEROS = "<?php echo $API_BASE_TABLEROS; ?>"; 
     window.API_BASE_PROJECTS = "<?php echo $API_BASE_PROJECTS; ?>";
+    window.API_BASE_CHAT = "<?php echo $API_BASE_CHAT; ?>";
     window.UPLOADS_BASE = "<?php echo $UPLOADS_BASE; ?>";
     window.CURRENT_USER = <?php echo json_encode($user ?? null, JSON_UNESCAPED_UNICODE); ?>;
     
@@ -99,6 +105,7 @@ $UPLOADS_BASE = $basePath . '/assets/uploads';
     console.log("API_BASE_TAREAS:", window.API_BASE_TAREAS);
     console.log("API_BASE_TABLEROS:", window.API_BASE_TABLEROS); 
     console.log("API_BASE_PROJECTS:", window.API_BASE_PROJECTS);
+    console.log("API_BASE_CHAT:", window.API_BASE_CHAT);
     console.log("API_BASE_PERFIL:", window.API_BASE_PERFIL);
     console.log("=============================");
   </script>

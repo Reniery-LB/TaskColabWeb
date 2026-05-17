@@ -463,6 +463,53 @@
       </div>
     </div>
 
+    <!-- CHAT -->
+    <section id="chat" class="seccion">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Colaboración</span>
+          <h2 class="titulo-seccion">Chat</h2>
+        </div>
+        <span id="chat-status" class="chat-status">Cargando...</span>
+      </div>
+
+      <div class="chat-layout">
+        <aside class="chat-sidebar-panel">
+          <div class="chat-direct-form">
+            <select id="chat-user-select" aria-label="Usuario para chat privado">
+              <option value="">Chat privado con...</option>
+            </select>
+            <button type="button" id="chat-start-direct">Abrir</button>
+          </div>
+
+          <div id="chat-conversations-list" class="chat-conversations-list">
+            <div class="chat-empty-list">Cargando conversaciones...</div>
+          </div>
+        </aside>
+
+        <div class="chat-panel">
+          <header class="chat-panel-header">
+            <div>
+              <h3 id="chat-active-title">Chat</h3>
+              <p id="chat-active-meta">Selecciona una conversación</p>
+            </div>
+            <button type="button" id="chat-delete-active" class="chat-delete-active" hidden>Eliminar chat</button>
+          </header>
+
+          <div id="chat-empty-state" class="chat-empty-state">
+            <strong>Sin conversación activa</strong>
+          </div>
+
+          <div id="chat-messages" class="chat-messages"></div>
+
+          <form id="chat-form" class="chat-form" style="display: none;">
+            <textarea id="chat-message-input" rows="2" maxlength="4000" placeholder="Escribe un mensaje..." required></textarea>
+            <button id="chat-send" type="submit">Enviar</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
     <!-- SECCIÓN USUARIOS -->
     <section id="usuarios" class="seccion">
         <h2 class="titulo-seccion">Usuarios</h2>
@@ -955,6 +1002,7 @@
   <script src="../../assets/javascript/tasks.js" defer></script>
   <script src="../../assets/javascript/boards.js" defer></script>
   <script src="../../assets/javascript/reports.js" defer></script>
+  <script src="../../assets/javascript/chat.js" defer></script>
   <script src="../../assets/javascript/profile.js" defer></script>
 </body>
 </html>
