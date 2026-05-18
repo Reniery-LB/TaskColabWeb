@@ -616,7 +616,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // });
 
   // --- CERRAR SESIÓN ---
-  const iconCerrar = document.querySelector(".user-info a img");
+  const iconCerrar = document.querySelector(".header-logout-link img");
   const cancelarCerrar = document.getElementById("cancelarCerrarSesion");
   const confirmarCerrar = document.getElementById("confirmarCerrarSesion");
 
@@ -636,7 +636,31 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   confirmarCerrar?.addEventListener("click", () => {
-    window.location.href = "../../index.html";
+    window.location.href = "../../assets/app/logout.php";
+  });
+
+  document.querySelectorAll('input[type="date"]').forEach((input) => {
+    input.setAttribute('lang', 'es-MX');
+    input.setAttribute('inputmode', 'none');
+    input.addEventListener('keydown', (event) => event.preventDefault());
+    input.addEventListener('paste', (event) => event.preventDefault());
+    input.addEventListener('drop', (event) => event.preventDefault());
+    input.addEventListener('click', () => {
+      if (typeof input.showPicker === 'function') input.showPicker();
+    });
+  });
+
+  document.querySelectorAll('.date-picker-button').forEach((button) => {
+    button.addEventListener('click', () => {
+      const input = document.getElementById(button.dataset.dateTarget || '');
+      if (!input) return;
+      input.focus();
+      if (typeof input.showPicker === 'function') {
+        input.showPicker();
+      } else {
+        input.click();
+      }
+    });
   });
 
   // --- ACCIONES EN TARJETAS (eliminar / mover) ---

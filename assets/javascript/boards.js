@@ -706,9 +706,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             return date.toLocaleDateString('es-MX', {
-                year: 'numeric',
-                month: '2-digit',
                 day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
                 timeZone: 'America/Mazatlan'
             });
         } catch (error) {

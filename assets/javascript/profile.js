@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
         inputs.forEach(input => {
             input.value = '';
             input.placeholder = input.id === 'currentPassword' ? 'Contraseña actual' : 
-                            input.id === 'newPassword' ? 'Nueva contraseña (mín. 6 caracteres)' : 
+                            input.id === 'newPassword' ? 'Nueva contraseña (mín. 8 caracteres)' :
                             'Confirma tu nueva contraseña';
         });
         
@@ -293,8 +293,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        if (newPassword.length < 6) {
-            mostrarError('La contraseña debe tener al menos 6 caracteres', 'editar-contrasena');
+        if (newPassword.length < 8) {
+            mostrarError('La contraseña debe tener al menos 8 caracteres', 'editar-contrasena');
             return;
         }
 
@@ -974,9 +974,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             return date.toLocaleDateString('es-MX', {
-                year: 'numeric',
-                month: '2-digit',
                 day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
                 timeZone: 'America/Mazatlan'
             });
         } catch (error) {
@@ -1070,7 +1070,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!dateString) return '-';
         const date = new Date(dateString);
         if (isNaN(date)) return dateString;
-        return date.toLocaleDateString('es-MX');
+        return date.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
     }
 
     // Función específica para manejar tareas asignadas desde Admin

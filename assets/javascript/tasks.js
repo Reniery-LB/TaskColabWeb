@@ -638,7 +638,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function actualizarBotonBasura() {
     const seleccionadas = document.querySelectorAll('.check-cuadro.checked').length;
     if (btnEliminarSeleccionadas) {
-      btnEliminarSeleccionadas.style.display = seleccionadas > 0 ? 'inline-block' : 'none';
+      btnEliminarSeleccionadas.style.display = seleccionadas > 0 ? 'inline-flex' : 'none';
     }
     console.log(`Tareas seleccionadas: ${seleccionadas}`);
   }
@@ -714,9 +714,9 @@ document.addEventListener('DOMContentLoaded', function() {
           }
           
           return date.toLocaleDateString('es-MX', {
-              year: 'numeric',
-              month: '2-digit',
               day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
               timeZone: 'America/Mazatlan'
           });
       } catch (error) {

@@ -1445,6 +1445,19 @@ select {
     justify-content: center;
     gap: 20px;
 }
+
+#form-editar-usuario-admin .botones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: center;
+}
+
+#form-editar-usuario-admin .botones button {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 18px;
+}
 /* === ESTILOS PARA SELECT DE TAREAS === */
 .select-tareas-container {
   margin-top: 10px;
@@ -2919,6 +2932,29 @@ body {
   object-fit: contain;
 }
 
+.header-logout-link {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #eef4ff;
+  border: 1px solid var(--tc-border);
+  transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.header-logout-link:hover {
+  background: #dfeaff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(27, 92, 255, 0.16);
+}
+
+.user-info .header-logout-link img {
+  width: 40px;
+  height: 40px;
+}
+
 .profile-circle {
   width: 40px;
   height: 40px;
@@ -3189,9 +3225,17 @@ body {
 
 .projects-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 0.42fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.42fr);
   gap: 18px;
   align-items: start;
+}
+
+.project-list-panel {
+  order: 1;
+}
+
+.project-create-panel {
+  order: 2;
 }
 
 .project-create-panel,
@@ -3241,6 +3285,59 @@ body {
   border-radius: 10px;
   font-family: "Poppins", sans-serif;
   font-size: 14px;
+}
+
+.date-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.date-input-wrap input[type="date"] {
+  padding-right: 52px;
+  color: var(--tc-text) !important;
+}
+
+.date-input-wrap input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.date-picker-button {
+  position: absolute;
+  right: 6px;
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--tc-primary-soft);
+  border: 1px solid #cfe0ff;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+.date-picker-button:hover {
+  background: #dfeaff;
+  transform: translateY(-1px);
+}
+
+.date-picker-button img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.form-tarea .fila .date-input-wrap {
+  flex: 2;
+  margin-left: 10px;
+}
+
+.form-tarea .fila .date-input-wrap input,
+#formulario-tarea .date-input-wrap input {
+  margin-left: 0;
 }
 
 .project-create-panel textarea,
@@ -3605,7 +3702,7 @@ body {
 }
 
 .column-kicker {
-  margin-bottom: 4px;
+  margin-bottom: 0;
   color: var(--tc-muted);
   font-size: 11px;
 }
@@ -3782,6 +3879,22 @@ body {
   font-size: 18px;
 }
 
+.botones-tarjeta button.eliminar {
+  background: #dc2626;
+  border: 1px solid #b91c1c;
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(220, 38, 38, 0.22);
+}
+
+.botones-tarjeta button.eliminar:hover {
+  background: #b91c1c;
+}
+
+.botones-tarjeta button.eliminar .delete-card {
+  filter: brightness(0) invert(1);
+  opacity: 1;
+}
+
 .tarjeta .acciones button:hover,
 .botones-tarjeta button:hover {
   background: var(--tc-primary);
@@ -3798,6 +3911,14 @@ body {
   border: 1px solid var(--tc-border);
   border-radius: var(--tc-radius);
   box-shadow: var(--tc-shadow-sm);
+}
+
+.encabezado-tareas {
+  justify-content: space-between;
+}
+
+.encabezado-tareas .btn-azul {
+  margin-left: auto;
 }
 
 .descripcion-exportar {
@@ -4078,18 +4199,23 @@ body {
 
 .btn-basura {
   position: static;
-  width: 44px;
-  height: 44px;
-  background: #fee2e2;
-  border: 1px solid #fecaca;
+  width: 58px;
+  height: 58px;
+  align-items: center;
+  justify-content: center;
+  background: #dc2626;
+  border: 1px solid #b91c1c;
+  box-shadow: 0 12px 24px rgba(220, 38, 38, 0.22);
 }
 
 .btn-basura:hover {
-  background: #fecaca;
+  background: #b91c1c;
 }
 
 .btn-basura img {
-  filter: none;
+  width: 30px;
+  height: 30px;
+  filter: brightness(0) invert(1);
 }
 
 .tarjetas-metricas {
@@ -4283,6 +4409,7 @@ body {
   gap: 18px;
   margin-bottom: 20px;
   padding: 4px 0 8px;
+  text-align: left;
 }
 
 .reports-hero .titulo-reportes {
@@ -4313,6 +4440,7 @@ body {
   box-shadow: var(--tc-shadow-sm);
   cursor: pointer;
   transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+  text-align: center;
 }
 
 .report-kpi-card::before {
@@ -4375,12 +4503,17 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 14px;
+  text-align: left;
 }
 
 .report-panel-head h3 {
   margin: 3px 0 0;
   color: var(--tc-text);
   font-size: 20px;
+}
+
+#reportes {
+  text-align: left;
 }
 
 .chart-box {

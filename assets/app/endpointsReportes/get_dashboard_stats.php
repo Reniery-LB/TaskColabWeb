@@ -257,7 +257,7 @@ function normalizeWeeks(array $rows): array {
         $key = $week->format('Y-m-d');
         $weeks[] = [
             'week_start' => $key,
-            'label' => $week->format('d M'),
+            'label' => $week->format('d/m/Y'),
             'total' => $byWeek[$key] ?? 0,
         ];
     }

@@ -172,7 +172,7 @@ function buildPdfHtml(array $data): string {
 
     $stateBars = '';
     foreach ($states as $state) {
-        $color = ['pending' => '#f59e0b', 'in_progress' => '#1b5cff', 'done' => '#16a34a'][$state['status']] ?? '#64748b';
+        $color = ['pending' => '#FF0000', 'in_progress' => '#DC8D26', 'done' => '#16a34a'][$state['status']] ?? '#64748b';
         $stateBars .= barRow(e($state['status_display']), (int)$state['total_tasks'], (float)$state['percentage'], $color);
     }
 
@@ -231,11 +231,11 @@ body { font-family: DejaVu Sans, sans-serif; color: #172033; font-size: 11px; ma
 h1 { font-size: 30px; margin: 6px 0 6px; }
 .cover p { margin: 2px 0; color: #dbeafe; }
 .kpis { width: 100%; border-collapse: separate; border-spacing: 8px; margin: 0 0 12px; }
-.kpis td { width: 20%; background: #f8fbff; border: 1px solid #dbe6f7; border-top: 5px solid #1b5cff; border-radius: 10px; padding: 12px; }
+.kpis td { width: 20%; height: 104px; vertical-align: top; background: #f8fbff; border: 1px solid #dbe6f7; border-top: 5px solid #1b5cff; border-radius: 10px; padding: 12px; }
 .kpis .green { border-top-color: #16a34a; }
-.kpis .red { border-top-color: #dc2626; }
-.kpis .amber { border-top-color: #f59e0b; }
-.kpis span { display: block; color: #64748b; font-size: 10px; font-weight: bold; }
+.kpis .red { border-top-color: #FF0000; }
+.kpis .amber { border-top-color: #DC8D26; }
+.kpis span { display: block; min-height: 14px; color: #64748b; font-size: 10px; font-weight: bold; white-space: nowrap; }
 .kpis strong { display: block; color: #172033; font-size: 24px; margin: 7px 0 4px; }
 .section { margin-top: 14px; page-break-inside: avoid; }
 .section h2 { margin: 0 0 8px; color: #172033; font-size: 16px; }
@@ -265,7 +265,7 @@ h1 { font-size: 30px; margin: 6px 0 6px; }
 <body>
 <div class="cover">
     <div class="eyebrow">TaskColab · Reporte ejecutivo</div>
-    <h1>Reporte moderno de productividad</h1>
+    <h1>Reporte de productividad</h1>
     <p>Generado: ' . e($data['fecha']) . '</p>
     <p>Usuario: ' . e($data['userName']) . ' · ' . e($data['userEmail']) . '</p>
 </div>
@@ -347,7 +347,7 @@ function normalizeWeeks(array $rows): array {
     for ($i = 0; $i < 6; $i++) {
         $week = $start->modify("+{$i} weeks");
         $key = $week->format('Y-m-d');
-        $weeks[] = ['label' => $week->format('d M'), 'total' => $byWeek[$key] ?? 0];
+        $weeks[] = ['label' => $week->format('d/m/Y'), 'total' => $byWeek[$key] ?? 0];
     }
     return $weeks;
 }

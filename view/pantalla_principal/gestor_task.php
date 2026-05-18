@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestor de Tareas</title>
-  <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260516-2">
+  <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260516-3">
 </head>
 <body>
   <!-- CONTENIDO PRINCIPAL -->
@@ -66,7 +66,12 @@
             <div class="project-form-grid">
               <div>
                 <label for="project-due-date">Fecha objetivo</label>
-                <input id="project-due-date" name="due_date" type="date">
+                <div class="date-input-wrap">
+                  <input id="project-due-date" name="due_date" type="date" lang="es-MX" inputmode="none">
+                  <button type="button" class="date-picker-button" aria-label="Abrir calendario" data-date-target="project-due-date">
+                    <img src="../../assets/img/icono-calendario.png" alt="">
+                  </button>
+                </div>
               </div>
               <div>
                 <label for="project-color">Color</label>
@@ -132,7 +137,12 @@
               <div class="project-form-grid">
                 <div>
                   <label for="edit-project-due-date">Fecha objetivo</label>
-                  <input id="edit-project-due-date" name="due_date" type="date">
+                  <div class="date-input-wrap">
+                    <input id="edit-project-due-date" name="due_date" type="date" lang="es-MX" inputmode="none">
+                    <button type="button" class="date-picker-button" aria-label="Abrir calendario" data-date-target="edit-project-due-date">
+                      <img src="../../assets/img/icono-calendario.png" alt="">
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label for="edit-project-color">Color</label>
@@ -170,7 +180,6 @@
         <div class="columna columna-pending">
           <div class="titulo-columna">
             <div>
-              <span class="column-kicker">Por iniciar</span>
               <h3>Pendiente <span class="column-count" data-count-column="pending">0</span></h3>
             </div>
             <button class="add-card" data-seccion="pendiente" aria-label="Crear tarjeta pendiente">+</button>
@@ -180,7 +189,6 @@
         <div class="columna columna-progress">
           <div class="titulo-columna">
             <div>
-              <span class="column-kicker">En marcha</span>
               <h3>En proceso <span class="column-count" data-count-column="in_progress">0</span></h3>
             </div>
             <button class="add-card" data-seccion="proceso" aria-label="Crear tarjeta en proceso">+</button>
@@ -190,7 +198,6 @@
         <div class="columna columna-done">
           <div class="titulo-columna">
             <div>
-              <span class="column-kicker">Cerradas</span>
               <h3>Completado <span class="column-count" data-count-column="done">0</span></h3>
             </div>
             <button class="add-card" data-seccion="completado" aria-label="Crear tarjeta completada">+</button>
@@ -235,10 +242,17 @@
           </select>
 
           <label for="fecha-tarjeta">Fecha límite:</label>
-          <input class="date" 
-                type="date" 
-                id="fecha-tarjeta" 
-                name="fecha-tarjeta">
+          <div class="date-input-wrap">
+            <input class="date"
+                  type="date"
+                  id="fecha-tarjeta"
+                  name="fecha-tarjeta"
+                  lang="es-MX"
+                  inputmode="none">
+            <button type="button" class="date-picker-button" aria-label="Abrir calendario" data-date-target="fecha-tarjeta">
+              <img src="../../assets/img/icono-calendario.png" alt="">
+            </button>
+          </div>
 
           <div class="botones">
             <button type="button" class="cancelar">Cancelar</button>
@@ -288,7 +302,7 @@
               <th>Tarea</th>
               <th>Tablero</th>
               <th>Estado</th>
-              <th>Fecha</th>
+              <th>Fecha límite</th>
               <th><img src="../../assets/img/icono-usuario.png" class="icono-completado" alt="Completado"></th>
             </tr>
           </thead>
@@ -364,7 +378,12 @@
           <!-- FECHA -->
           <div class="fila">
             <label for="fecha">Fecha límite:</label>
-            <input type="date" id="fecha" name="fecha" style="color: white;">
+            <div class="date-input-wrap">
+              <input type="date" id="fecha" name="fecha" lang="es-MX" inputmode="none">
+              <button type="button" class="date-picker-button" aria-label="Abrir calendario" data-date-target="fecha">
+                <img src="../../assets/img/icono-calendario.png" alt="">
+              </button>
+            </div>
           </div>
 
           <!-- BOTONES -->
@@ -803,10 +822,10 @@
             <input type="password" id="currentPassword" class="input-edicion" placeholder="Ingresa tu contraseña actual" required>
             
             <label class="label-edicion">Nueva contraseña</label>
-            <input type="password" id="newPassword" class="input-edicion" placeholder="Escribe tu nueva contraseña..." required>
+            <input type="password" id="newPassword" class="input-edicion" placeholder="Escribe tu nueva contraseña..." required minlength="8">
             
             <label class="label-edicion">Confirmar contraseña</label>
-            <input type="password" id="confirmPassword" class="input-edicion" placeholder="Confirma tu nueva contraseña..." required>
+            <input type="password" id="confirmPassword" class="input-edicion" placeholder="Confirma tu nueva contraseña..." required minlength="8">
             
             <p class="confirmacion-edicion">¿Confirmas los cambios realizados?</p>
             
@@ -1010,15 +1029,15 @@
       window.API_BASE = apiBase;
   </script>
 
-  <script src="../../assets/javascript/menu.js" defer></script>
+  <script src="../../assets/javascript/menu.js?v=20260516-3" defer></script>
   <script src="../../assets/javascript/admin.js" defer></script>
-  <script src="../../assets/javascript/users.js" defer></script>
-  <script src="../../assets/javascript/projects.js" defer></script>
-  <script src="../../assets/javascript/tasks.js" defer></script>
-  <script src="../../assets/javascript/boards.js" defer></script>
+  <script src="../../assets/javascript/users.js?v=20260516-3" defer></script>
+  <script src="../../assets/javascript/projects.js?v=20260516-3" defer></script>
+  <script src="../../assets/javascript/tasks.js?v=20260516-3" defer></script>
+  <script src="../../assets/javascript/boards.js?v=20260516-3" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
-  <script src="../../assets/javascript/reports.js?v=20260516-2" defer></script>
+  <script src="../../assets/javascript/reports.js?v=20260516-3" defer></script>
   <script src="../../assets/javascript/chat.js" defer></script>
-  <script src="../../assets/javascript/profile.js" defer></script>
+  <script src="../../assets/javascript/profile.js?v=20260516-3" defer></script>
 </body>
 </html>

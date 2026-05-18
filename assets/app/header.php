@@ -39,6 +39,7 @@ $initial = mb_strtoupper(mb_substr($userName, 0, 1, 'UTF-8'));
 
 $imgBase = '../../assets/img';
 $homeLink = '../../index.html';
+$logoutLink = '../../assets/app/logout.php';
 
 // DETECTAR SI ESTAMOS EN LOCAL O EN PRODUCCIÓN
 $isLocal = (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false || 
@@ -63,7 +64,7 @@ $UPLOADS_BASE = $basePath . '/assets/uploads';
 <header class="header">
   <div class="left-section">
     <div class="logo-box-todo">
-      <a href="<?php echo $homeLink; ?>"><img src="<?php echo $imgBase; ?>/logo.png" width="30" alt="logo_tareas" class="logo"></a>
+      <a href="<?php echo $logoutLink; ?>" aria-label="Cerrar sesión e ir al inicio"><img src="<?php echo $imgBase; ?>/logo.png" width="30" alt="logo_tareas" class="logo"></a>
     </div>
     <div class="tab-container">
       <h2 class="tab">Espacio de trabajo</h2>
@@ -86,7 +87,7 @@ $UPLOADS_BASE = $basePath . '/assets/uploads';
             <?php echo htmlspecialchars($initial, ENT_QUOTES); ?>
         <?php endif; ?>
     </div>
-    <a href="<?php echo $homeLink; ?>"><img src="<?php echo $imgBase; ?>/cerrarsesion.png" alt="cerrar sesión"></a>
+    <a class="header-logout-link" href="<?php echo $logoutLink; ?>"><img src="<?php echo $imgBase; ?>/cerrarsesion.png" alt="cerrar sesión"></a>
   </div>
 
   <script>

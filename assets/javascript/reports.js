@@ -85,7 +85,7 @@ class ReportsManager {
   renderStatusChart(rows) {
     const labels = rows.map(item => item.status_display);
     const values = rows.map(item => Number(item.total_tasks || 0));
-    const colors = ['#f59e0b', '#1b5cff', '#16a34a'];
+    const colors = ['#FF0000', '#DC8D26', '#16a34a'];
     const canvas = document.getElementById('report-status-chart');
     const fallback = document.getElementById('report-status-fallback');
     const legend = document.getElementById('report-status-legend');
