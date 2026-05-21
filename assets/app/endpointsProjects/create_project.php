@@ -37,6 +37,10 @@ if (!preg_match('/^#[0-9A-Fa-f]{6}$/', $color)) {
 $dueDate = trim($input['due_date'] ?? '');
 if ($dueDate !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dueDate)) {
     $dueDate = '';
+} elseif ($dueDate !== '' && $dueDate < date('Y-m-d')) {
+    http_response_code(400);
+    echo json_encode(['ok' => false, 'message' => 'La fecha objetivo no puede ser anterior al día de hoy']);
+    exit;
 }
 
 try {

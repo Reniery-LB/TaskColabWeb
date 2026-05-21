@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestor de Tareas</title>
-  <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260516-3">
+  <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260520-1">
 </head>
 <body>
   <!-- CONTENIDO PRINCIPAL -->
@@ -67,7 +67,7 @@
               <div>
                 <label for="project-due-date">Fecha objetivo</label>
                 <div class="date-input-wrap">
-                  <input id="project-due-date" name="due_date" type="date" lang="es-MX" inputmode="none">
+                  <input id="project-due-date" name="due_date" type="date" lang="es-MX" inputmode="none" min="<?php echo date('Y-m-d'); ?>">
                   <button type="button" class="date-picker-button" aria-label="Abrir calendario" data-date-target="project-due-date">
                     <img src="../../assets/img/icono-calendario.png" alt="">
                   </button>
@@ -138,7 +138,7 @@
                 <div>
                   <label for="edit-project-due-date">Fecha objetivo</label>
                   <div class="date-input-wrap">
-                    <input id="edit-project-due-date" name="due_date" type="date" lang="es-MX" inputmode="none">
+                    <input id="edit-project-due-date" name="due_date" type="date" lang="es-MX" inputmode="none" min="<?php echo date('Y-m-d'); ?>">
                     <button type="button" class="date-picker-button" aria-label="Abrir calendario" data-date-target="edit-project-due-date">
                       <img src="../../assets/img/icono-calendario.png" alt="">
                     </button>
@@ -248,7 +248,8 @@
                   id="fecha-tarjeta"
                   name="fecha-tarjeta"
                   lang="es-MX"
-                  inputmode="none">
+                  inputmode="none"
+                  min="<?php echo date('Y-m-d'); ?>">
             <button type="button" class="date-picker-button" aria-label="Abrir calendario" data-date-target="fecha-tarjeta">
               <img src="../../assets/img/icono-calendario.png" alt="">
             </button>
@@ -379,7 +380,7 @@
           <div class="fila">
             <label for="fecha">Fecha límite:</label>
             <div class="date-input-wrap">
-              <input type="date" id="fecha" name="fecha" lang="es-MX" inputmode="none">
+              <input type="date" id="fecha" name="fecha" lang="es-MX" inputmode="none" min="<?php echo date('Y-m-d'); ?>">
               <button type="button" class="date-picker-button" aria-label="Abrir calendario" data-date-target="fecha">
                 <img src="../../assets/img/icono-calendario.png" alt="">
               </button>
@@ -1029,14 +1030,14 @@
       window.API_BASE = apiBase;
   </script>
 
-  <script src="../../assets/javascript/menu.js?v=20260516-3" defer></script>
+  <script src="../../assets/javascript/menu.js?v=20260520-1" defer></script>
   <script src="../../assets/javascript/admin.js" defer></script>
   <script src="../../assets/javascript/users.js?v=20260516-3" defer></script>
-  <script src="../../assets/javascript/projects.js?v=20260516-3" defer></script>
-  <script src="../../assets/javascript/tasks.js?v=20260516-3" defer></script>
-  <script src="../../assets/javascript/boards.js?v=20260516-3" defer></script>
+  <script src="../../assets/javascript/projects.js?v=20260520-1" defer></script>
+  <script src="../../assets/javascript/tasks.js?v=20260520-1" defer></script>
+  <script src="../../assets/javascript/boards.js?v=20260520-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
-  <script src="../../assets/javascript/reports.js?v=20260516-3" defer></script>
+  <script src="../../assets/javascript/reports.js?v=20260520-1" defer></script>
   <script src="../../assets/javascript/chat.js" defer></script>
   <script src="../../assets/javascript/profile.js?v=20260516-3" defer></script>
 </body>

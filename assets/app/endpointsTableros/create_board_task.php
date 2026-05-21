@@ -33,6 +33,7 @@ if (!$user_id) {
     echo json_encode(['ok' => false, 'message' => 'No autenticado']);
     exit;
 }
+$is_admin = !empty($_SESSION['user']['is_admin']);
 
 // Leer datos del body
 $input = json_decode(file_get_contents('php://input'), true);
@@ -69,6 +70,33 @@ try {
         exit;
     }
     
+    $dueDate = trim($input['due_date'] ?? '');
+    if ($dueDate !== '') {
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $dueDate)) {
+            throw new Exception('Fecha límite inválida');
+        }
+        if ($dueDate < date('Y-m-d')) {
+            throw new Exception('La fecha límite no puede ser anterior al día de hoy');
+        }
+    }
+
+    $assignedTo = [];
+    if ($is_admin) {
+        $rawAssigned = $input['assigned_to'] ?? [];
+        if (!is_array($rawAssigned)) {
+            $rawAssigned = $rawAssigned ? [$rawAssigned] : [];
+        }
+        foreach ($rawAssigned as $assignedId) {
+            $assignedId = (int)$assignedId;
+            if ($assignedId > 0) {
+                $assignedTo[] = $assignedId;
+            }
+        }
+        $assignedTo = array_values(array_unique($assignedTo));
+    } else {
+        $assignedTo = [(int)$user_id];
+    }
+
     // Mapear columna a status (en español para TaskModel)
     $statusMap = [
         'pending' => 'Pendiente',
@@ -84,9 +112,9 @@ try {
         'description' => trim($input['description'] ?? ''),
         'status' => $status,
         'priority' => $input['priority'] ?? 'Media', // Alta, Media, Baja
-        'due_date' => $input['due_date'] ?? null,
+        'due_date' => $dueDate !== '' ? $dueDate : null,
         'created_by' => $user_id,
-        'assigned_to' => $input['assigned_to'] ?? null,
+        'assigned_to' => $assignedTo,
         'board_id' => $boardId,
         'column_created' => $column
     ];

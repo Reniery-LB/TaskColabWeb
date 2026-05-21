@@ -108,6 +108,40 @@ class ProjectModel {
     public function listProjects($userId) {
         $this->getOrCreateDefaultProject($userId);
 
+        $adminStmt = $this->conn->prepare("SELECT is_admin FROM users WHERE id = ? AND is_active = 1");
+        $adminStmt->execute([$userId]);
+        $isAdmin = (int)$adminStmt->fetchColumn() === 1;
+
+        if ($isAdmin) {
+            $stmt = $this->conn->prepare("
+                SELECT 
+                    p.id,
+                    p.name,
+                    p.description,
+                    p.owner_id,
+                    p.status,
+                    p.color,
+                    p.due_date,
+                    p.created_at,
+                    p.updated_at,
+                    COALESCE(b.id, 0) AS board_id,
+                    COUNT(DISTINCT t.id) AS total_tasks,
+                    COUNT(DISTINCT CASE WHEN t.status = 'pending' AND t.is_active = 1 THEN t.id END) AS pending_tasks,
+                    COUNT(DISTINCT CASE WHEN t.status = 'in_progress' AND t.is_active = 1 THEN t.id END) AS in_progress_tasks,
+                    COUNT(DISTINCT CASE WHEN t.status = 'done' AND t.is_active = 1 THEN t.id END) AS done_tasks,
+                    COUNT(DISTINCT pm_all.user_id) AS members_count
+                FROM projects p
+                LEFT JOIN boards b ON b.project_id = p.id
+                LEFT JOIN tasks t ON t.board_id = b.id AND t.is_active = 1
+                LEFT JOIN project_members pm_all ON pm_all.project_id = p.id
+                WHERE p.status <> 'archived'
+                GROUP BY p.id, p.name, p.description, p.owner_id, p.status, p.color, p.due_date, p.created_at, p.updated_at, b.id
+                ORDER BY p.updated_at DESC, p.created_at DESC
+            ");
+            $stmt->execute();
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
         $stmt = $this->conn->prepare("
             SELECT 
                 p.id,
@@ -121,20 +155,42 @@ class ProjectModel {
                 p.updated_at,
                 COALESCE(b.id, 0) AS board_id,
                 COUNT(DISTINCT t.id) AS total_tasks,
-                SUM(CASE WHEN t.status = 'pending' AND t.is_active = 1 THEN 1 ELSE 0 END) AS pending_tasks,
-                SUM(CASE WHEN t.status = 'in_progress' AND t.is_active = 1 THEN 1 ELSE 0 END) AS in_progress_tasks,
-                SUM(CASE WHEN t.status = 'done' AND t.is_active = 1 THEN 1 ELSE 0 END) AS done_tasks,
+                COUNT(DISTINCT CASE WHEN t.status = 'pending' AND t.is_active = 1 THEN t.id END) AS pending_tasks,
+                COUNT(DISTINCT CASE WHEN t.status = 'in_progress' AND t.is_active = 1 THEN t.id END) AS in_progress_tasks,
+                COUNT(DISTINCT CASE WHEN t.status = 'done' AND t.is_active = 1 THEN t.id END) AS done_tasks,
                 COUNT(DISTINCT pm_all.user_id) AS members_count
             FROM projects p
-            INNER JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = :user_id
+            LEFT JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = :user_id
             LEFT JOIN boards b ON b.project_id = p.id
-            LEFT JOIN tasks t ON t.board_id = b.id AND t.is_active = 1
+            LEFT JOIN tasks t ON t.board_id = b.id
+                AND t.is_active = 1
+                AND EXISTS (
+                    SELECT 1
+                    FROM task_assignments ta_visible
+                    WHERE ta_visible.task_id = t.id
+                      AND ta_visible.user_id = :task_user_id
+                )
             LEFT JOIN project_members pm_all ON pm_all.project_id = p.id
             WHERE p.status <> 'archived'
+              AND (
+                pm.user_id IS NOT NULL
+                OR EXISTS (
+                    SELECT 1
+                    FROM tasks assigned_task
+                    INNER JOIN task_assignments assigned_ta ON assigned_ta.task_id = assigned_task.id
+                    WHERE assigned_task.board_id = b.id
+                      AND assigned_task.is_active = 1
+                      AND assigned_ta.user_id = :assigned_user_id
+                )
+              )
             GROUP BY p.id, p.name, p.description, p.owner_id, p.status, p.color, p.due_date, p.created_at, p.updated_at, b.id
             ORDER BY p.updated_at DESC, p.created_at DESC
         ");
-        $stmt->execute([':user_id' => $userId]);
+        $stmt->execute([
+            ':user_id' => $userId,
+            ':task_user_id' => $userId,
+            ':assigned_user_id' => $userId
+        ]);
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
@@ -317,6 +373,9 @@ class ProjectModel {
             if ($dueDate !== '' && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $dueDate)) {
                 throw new Exception('Fecha objetivo inválida');
             }
+            if ($dueDate !== '' && $dueDate < date('Y-m-d')) {
+                throw new Exception('La fecha objetivo no puede ser anterior al día de hoy');
+            }
             $fields[] = 'due_date = :due_date';
             $params[':due_date'] = $dueDate ?: null;
         }
@@ -402,6 +461,14 @@ class ProjectModel {
                 OR bm.user_id IS NOT NULL
                 OR EXISTS (
                     SELECT 1
+                    FROM tasks assigned_task
+                    INNER JOIN task_assignments assigned_ta ON assigned_ta.task_id = assigned_task.id
+                    WHERE assigned_task.board_id = b.id
+                      AND assigned_task.is_active = 1
+                      AND assigned_ta.user_id = :assigned_task_user_id
+                )
+                OR EXISTS (
+                    SELECT 1
                     FROM users admin_user
                     WHERE admin_user.id = :admin_user_id
                       AND admin_user.is_admin = 1
@@ -414,6 +481,7 @@ class ProjectModel {
             ':board_member_user_id' => $userId,
             ':board_id' => $boardId,
             ':owner_user_id' => $userId,
+            ':assigned_task_user_id' => $userId,
             ':admin_user_id' => $userId
         ]);
 

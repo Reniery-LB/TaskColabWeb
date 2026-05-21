@@ -115,7 +115,7 @@ class TaskModel {
                 
                 error_log("ADMIN: Usuario $userId puede ver TODAS las tareas");
             } else {
-                // SI NO ES ADMIN: Ver solo sus tareas
+                // SI NO ES ADMIN: Ver solo las tareas/tarjetas asignadas al usuario
                 $query = "SELECT DISTINCT
                             t.id,
                             t.title,
@@ -135,18 +135,12 @@ class TaskModel {
                         LEFT JOIN {$this->assignmentsTable} ta ON t.id = ta.task_id
                         LEFT JOIN users u ON ta.user_id = u.id
                         WHERE t.is_active = 1
-                        AND (
-                            t.created_by = :user_id1
-                            OR ta.user_id = :user_id2
-                            OR b.owner_id = :user_id3
-                        )
+                        AND ta.user_id = :user_id
                         GROUP BY t.id
                         ORDER BY t.created_at DESC";
                 
                 $stmt = $this->conn->prepare($query);
-                $stmt->bindParam(':user_id1', $userId, PDO::PARAM_INT);
-                $stmt->bindParam(':user_id2', $userId, PDO::PARAM_INT);
-                $stmt->bindParam(':user_id3', $userId, PDO::PARAM_INT);
+                $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
                 $stmt->execute();
                 
                 error_log("USUARIO NORMAL: Usuario $userId ve solo sus tareas");
@@ -289,7 +283,16 @@ class TaskModel {
             error_log("Tarea creada ID: $taskId, status: '$dbStatus', priority: '$dbPriority'");
             
             if (!empty($taskData['assigned_to'])) {
-                $this->assignTaskToUser($taskId, $taskData['assigned_to']);
+                $assignedUsers = is_array($taskData['assigned_to'])
+                    ? $taskData['assigned_to']
+                    : [$taskData['assigned_to']];
+
+                foreach (array_unique($assignedUsers) as $assignedUserId) {
+                    $assignedUserId = (int)$assignedUserId;
+                    if ($assignedUserId > 0) {
+                        $this->assignTaskToUser($taskId, $assignedUserId);
+                    }
+                }
             }
             
             return $taskId;
@@ -396,14 +399,22 @@ class TaskModel {
                 $deleteStmt = $this->conn->prepare($deleteSql);
                 $deleteStmt->execute([':task_id' => $taskId]);
                 
-                // Crear nueva asignación
+                // Crear nuevas asignaciones
                 if ($updateData['assigned_to']) {
                     $assignSql = "INSERT INTO task_assignments (task_id, user_id, assigned_at) VALUES (:task_id, :user_id, NOW())";
                     $assignStmt = $this->conn->prepare($assignSql);
-                    $assignStmt->execute([
-                        ':task_id' => $taskId,
-                        ':user_id' => $updateData['assigned_to']
-                    ]);
+                    $assignedUsers = is_array($updateData['assigned_to'])
+                        ? $updateData['assigned_to']
+                        : [$updateData['assigned_to']];
+
+                    foreach (array_unique($assignedUsers) as $assignedUserId) {
+                        $assignedUserId = (int)$assignedUserId;
+                        if ($assignedUserId <= 0) continue;
+                        $assignStmt->execute([
+                            ':task_id' => $taskId,
+                            ':user_id' => $assignedUserId
+                        ]);
+                    }
                 }
             }
             

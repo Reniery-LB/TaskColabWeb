@@ -28,6 +28,85 @@ document.addEventListener('DOMContentLoaded', function() {
       return window.TaskColabProjects?.getActiveBoardId?.() || 1;
   }
 
+  function getSelectedUserIds(select) {
+      if (!select) return [];
+      const container = select.parentElement?.querySelector('.multiselect-usuarios');
+      if (container) {
+          return Array.from(container.querySelectorAll('input[type="checkbox"]:checked'))
+              .map(cb => cb.value).filter(Boolean);
+      }
+      return Array.from(select.selectedOptions || [])
+          .map(option => option.value).filter(Boolean);
+  }
+
+  function buildAdminMultiSelect(selectEl, usuarios) {
+      selectEl.style.display = 'none';
+      selectEl.multiple = false;
+      selectEl.innerHTML = '';
+      selectEl.removeAttribute('size');
+      const old = selectEl.parentElement.querySelector('.multiselect-usuarios');
+      if (old) old.remove();
+      const container = document.createElement('div');
+      container.className = 'multiselect-usuarios';
+      container.id = 'multiselect-' + selectEl.id;
+      const hint = document.createElement('div');
+      hint.className = 'multiselect-hint';
+      hint.textContent = 'Haz clic para seleccionar uno o varios usuarios';
+      container.appendChild(hint);
+      const list = document.createElement('div');
+      list.className = 'multiselect-options';
+      usuarios.forEach(user => {
+          const lbl = document.createElement('label');
+          lbl.className = 'multiselect-option';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox'; cb.value = user.id;
+          cb.addEventListener('change', () => {
+              lbl.classList.toggle('checked', cb.checked);
+              const n = container.querySelectorAll('input:checked').length;
+              hint.textContent = n > 0 ? n + ' usuario(s) seleccionado(s)' : 'Haz clic para seleccionar uno o varios usuarios';
+          });
+          const sp = document.createElement('span');
+          sp.textContent = user.name;
+          lbl.appendChild(cb); lbl.appendChild(sp);
+          list.appendChild(lbl);
+      });
+      container.appendChild(list);
+      selectEl.insertAdjacentElement('afterend', container);
+  }
+
+  function restoreNormalSelect(selectEl, currentUser) {
+      selectEl.style.display = '';
+      selectEl.multiple = false;
+      selectEl.removeAttribute('size');
+      const old = selectEl.parentElement.querySelector('.multiselect-usuarios');
+      if (old) old.remove();
+      selectEl.innerHTML = '<option value="">Seleccionar usuario</option>';
+      const opt = document.createElement('option');
+      opt.value = currentUser.id;
+      opt.textContent = currentUser.name + ' (Yo)';
+      selectEl.appendChild(opt);
+      selectEl.value = String(currentUser.id);
+  }
+
+  function clearMultiSelect(selectEl) {
+      const c = selectEl?.parentElement?.querySelector('.multiselect-usuarios');
+      if (c) {
+          c.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+              cb.checked = false;
+              cb.closest('.multiselect-option')?.classList.remove('checked');
+          });
+          const hint = c.querySelector('.multiselect-hint');
+          if (hint) hint.textContent = 'Haz clic para seleccionar uno o varios usuarios';
+      }
+  }
+
+  function isFutureOrToday(value) {
+      if (!value) return true;
+      const today = new Date();
+      today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+      return value >= today.toISOString().slice(0, 10);
+  }
+
   // --- CONVERSIÓN DE ESTADOS Y PRIORIDADES ---
   function statusToBackend(status) {
       console.log("Convirtiendo estado frontend a backend:", status);
@@ -206,33 +285,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Usuario actual:', currentUser);
                 console.log('Es admin:', isAdmin);
                 
-                selectUsuario.innerHTML = '<option value="">Seleccionar usuario</option>';
-                
                 if (isAdmin) {
-                    // ADMIN: Ver todos los usuarios activos
-                    usuariosActivos.forEach(user => {
-                        const option = document.createElement('option');
-                        option.value = user.id;
-                        option.textContent = user.name;
-                        selectUsuario.appendChild(option);
-                    });
-                    console.log(`Admin: ${usuariosActivos.length} usuarios activos cargados`);
+                    buildAdminMultiSelect(selectUsuario, usuariosActivos);
+                    console.log(`Admin: ${usuariosActivos.length} usuarios activos cargados (checkboxes)`);
                 } else {
-                    // USUARIO NORMAL: Solo puede asignarse a sí mismo
-                    const currentUserActive = usuariosActivos.find(user => 
-                        user.id == currentUser.id
-                    );
-                    
-                    if (currentUserActive) {
-                        const option = document.createElement('option');
-                        option.value = currentUser.id;
-                        option.textContent = currentUser.name + ' (Yo)';
-                        selectUsuario.appendChild(option);
-                        console.log('Usuario normal: Solo puede asignarse a sí mismo');
-                    } else {
-                        console.warn('Usuario actual no encontrado en usuarios activos');
-                        selectUsuario.innerHTML = '<option value="">No disponible</option>';
-                    }
+                    restoreNormalSelect(selectUsuario, currentUser);
+                    console.log('Usuario normal: Solo puede asignarse a sí mismo');
                 }
             }
         } catch (error) {
@@ -251,7 +309,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const datosFormulario = {
       titulo: inputTitulo?.value.trim() || '',
       descripcion: inputDescripcion?.value.trim() || '',
-      usuarioId: selectUsuario?.value || '',
+      usuarioId: getSelectedUserIds(selectUsuario),
       estado: selectEstado?.value || 'pendiente',
       prioridad: selectPrioridad?.value || 'media',
       fechaLimite: inputFecha?.value || ''
@@ -282,6 +340,20 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             return;
         }
+
+        if (!isFutureOrToday(fechaLimite)) {
+            if (typeof configurarAlerta === 'function') {
+                configurarAlerta(
+                    "Fecha no válida",
+                    "La fecha límite no puede ser anterior al día de hoy.",
+                    "alerta",
+                    { soloAceptar: true }
+                );
+            } else {
+                alert("La fecha límite no puede ser anterior al día de hoy.");
+            }
+            return;
+        }
         
         console.log("Validaciones pasadas, creando tarea...");
         
@@ -299,7 +371,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const payload = {
             title: titulo,
             description: descripcion || '',
-            assigned_to: usuarioId ? parseInt(usuarioId) : null,
+            assigned_to: Array.isArray(usuarioId)
+                ? usuarioId.map(id => parseInt(id)).filter(id => id > 0)
+                : (usuarioId ? parseInt(usuarioId) : null),
             status: backendStatus,  
             priority: backendPriority, 
             due_date: fechaLimite || null,
@@ -331,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formAnadirTarea?.reset();
                 if (inputTitulo) inputTitulo.value = '';
                 if (inputDescripcion) inputDescripcion.value = '';
-                if (selectUsuario) selectUsuario.value = '';
+                if (selectUsuario) { selectUsuario.value = ''; clearMultiSelect(selectUsuario); }
                 if (selectEstado) selectEstado.value = 'pending';
                 if (selectPrioridad) selectPrioridad.value = 'medium';
                 if (inputFecha) inputFecha.value = '';
@@ -802,33 +876,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Usuario actual:', currentUser);
                 console.log('Es admin:', isAdmin);
                 
-                selectUsuario.innerHTML = '<option value="">Seleccionar usuario</option>';
-                
                 if (isAdmin) {
-                    // ADMIN: Ver todos los usuarios activos
-                    usuariosActivos.forEach(user => {
-                        const option = document.createElement('option');
-                        option.value = user.id;
-                        option.textContent = user.name;
-                        selectUsuario.appendChild(option);
-                    });
-                    console.log(`Admin: ${usuariosActivos.length} usuarios activos cargados`);
+                    buildAdminMultiSelect(selectUsuario, usuariosActivos);
+                    console.log(`Admin: ${usuariosActivos.length} usuarios activos cargados (checkboxes)`);
                 } else {
-                    // USUARIO NORMAL: Solo puede asignarse a sí mismo
-                    const currentUserActive = usuariosActivos.find(user => 
-                        user.id == currentUser.id
-                    );
-                    
-                    if (currentUserActive) {
-                        const option = document.createElement('option');
-                        option.value = currentUser.id;
-                        option.textContent = currentUser.name + ' (Yo)';
-                        selectUsuario.appendChild(option);
-                        console.log('Usuario normal: Solo puede asignarse a sí mismo');
-                    } else {
-                        console.warn('Usuario actual no encontrado en usuarios activos');
-                        selectUsuario.innerHTML = '<option value="">No disponible</option>';
-                    }
+                    restoreNormalSelect(selectUsuario, currentUser);
+                    console.log('Usuario normal: Solo puede asignarse a sí mismo');
                 }
             }
         } catch (error) {

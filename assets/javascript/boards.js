@@ -30,6 +30,85 @@ document.addEventListener('DOMContentLoaded', function() {
     function getActiveBoardId() {
         return window.TaskColabProjects?.getActiveBoardId?.() || 1;
     }
+
+    function getSelectedUserIds(select) {
+        if (!select) return [];
+        const container = select.parentElement?.querySelector('.multiselect-usuarios');
+        if (container) {
+            return Array.from(container.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(cb => cb.value).filter(Boolean);
+        }
+        return Array.from(select.selectedOptions || [])
+            .map(option => option.value).filter(Boolean);
+    }
+
+    function buildAdminMultiSelect(selectEl, usuarios) {
+        selectEl.style.display = 'none';
+        selectEl.multiple = false;
+        selectEl.innerHTML = '';
+        selectEl.removeAttribute('size');
+        const old = selectEl.parentElement.querySelector('.multiselect-usuarios');
+        if (old) old.remove();
+        const container = document.createElement('div');
+        container.className = 'multiselect-usuarios';
+        container.id = 'multiselect-' + selectEl.id;
+        const hint = document.createElement('div');
+        hint.className = 'multiselect-hint';
+        hint.textContent = 'Haz clic para seleccionar uno o varios usuarios';
+        container.appendChild(hint);
+        const list = document.createElement('div');
+        list.className = 'multiselect-options';
+        usuarios.forEach(user => {
+            const lbl = document.createElement('label');
+            lbl.className = 'multiselect-option';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.value = user.id;
+            cb.addEventListener('change', () => {
+                lbl.classList.toggle('checked', cb.checked);
+                const n = container.querySelectorAll('input:checked').length;
+                hint.textContent = n > 0 ? n + ' usuario(s) seleccionado(s)' : 'Haz clic para seleccionar uno o varios usuarios';
+            });
+            const sp = document.createElement('span');
+            sp.textContent = user.name;
+            lbl.appendChild(cb); lbl.appendChild(sp);
+            list.appendChild(lbl);
+        });
+        container.appendChild(list);
+        selectEl.insertAdjacentElement('afterend', container);
+    }
+
+    function restoreNormalSelect(selectEl, currentUser) {
+        selectEl.style.display = '';
+        selectEl.multiple = false;
+        selectEl.removeAttribute('size');
+        const old = selectEl.parentElement.querySelector('.multiselect-usuarios');
+        if (old) old.remove();
+        selectEl.innerHTML = '<option value="">Seleccionar usuario</option>';
+        const opt = document.createElement('option');
+        opt.value = currentUser.id;
+        opt.textContent = currentUser.name + ' (Yo)';
+        selectEl.appendChild(opt);
+        selectEl.value = String(currentUser.id);
+    }
+
+    function clearMultiSelect(selectEl) {
+        const c = selectEl?.parentElement?.querySelector('.multiselect-usuarios');
+        if (c) {
+            c.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+                cb.closest('.multiselect-option')?.classList.remove('checked');
+            });
+            const hint = c.querySelector('.multiselect-hint');
+            if (hint) hint.textContent = 'Haz clic para seleccionar uno o varios usuarios';
+        }
+    }
+
+    function isFutureOrToday(value) {
+        if (!value) return true;
+        const today = new Date();
+        today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+        return value >= today.toISOString().slice(0, 10);
+    }
     
     // === Click directo en el botón submit ===
     // const btnCrearTarjeta = document.querySelector('#form-tarjeta button[type="submit"]');
@@ -339,7 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Leer desde FormData 
         const titulo = formData.get('titulo-tarjeta')?.trim() || '';
         const descripcion = formData.get('descripcion-tarjeta')?.trim() || '';
-        const usuarioId = formData.get('asignar-tarjeta') || '';
+        const usuarioId = getSelectedUserIds(selectUsuario);
         const prioridad = formData.get('prioridad-tarjeta') || 'Media prioridad';
         const fecha = formData.get('fecha-tarjeta') || '';
         
@@ -372,6 +451,11 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("   FormData titulo:", titulo);
             console.error("   Variable titulo:", tituloBackup);
             mostrarError('Por favor, ingresa un título para la tarjeta');
+            return;
+        }
+
+        if (!isFutureOrToday(fecha)) {
+            mostrarError('La fecha límite no puede ser anterior al día de hoy');
             return;
         }
         
@@ -409,7 +493,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 column: datos.columna, // pending, in_progress, done
                 priority: priorityMap[datos.prioridad] || 'Media', 
                 due_date: datos.fecha || null,
-                assigned_to: datos.usuarioId ? parseInt(datos.usuarioId) : null,
+                assigned_to: Array.isArray(datos.usuarioId)
+                    ? datos.usuarioId.map(id => parseInt(id)).filter(id => id > 0)
+                    : (datos.usuarioId ? parseInt(datos.usuarioId) : null),
                 board_id: getActiveBoardId()
             };
 
@@ -430,6 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Limpiar formulario
                 formTarjeta?.reset();
+                clearMultiSelect(selectUsuario);
 
                 // Recargar tablero
                 await loadBoard();
@@ -643,30 +730,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const currentUser = window.CURRENT_USER;
                 const isAdmin = currentUser && currentUser.is_admin == 1;
 
-                selectUsuario.innerHTML = '<option value="">Seleccionar usuario</option>';
-
                 if (isAdmin) {
-                    // ADMIN: Ver todos los usuarios activos
-                    usuariosActivos.forEach(user => {
-                        const option = document.createElement('option');
-                        option.value = user.id;
-                        option.textContent = user.name;
-                        selectUsuario.appendChild(option);
-                    });
-                    console.log(`Admin: ${usuariosActivos.length} usuarios cargados`);
+                    buildAdminMultiSelect(selectUsuario, usuariosActivos);
+                    console.log(`Admin: ${usuariosActivos.length} usuarios cargados (checkboxes)`);
                 } else {
-                    // USUARIO NORMAL: Solo puede asignarse a sí mismo
-                    const currentUserActive = usuariosActivos.find(user =>
-                        user.id == currentUser.id
-                    );
-
-                    if (currentUserActive) {
-                        const option = document.createElement('option');
-                        option.value = currentUser.id;
-                        option.textContent = currentUser.name + ' (Yo)';
-                        selectUsuario.appendChild(option);
-                        console.log('Usuario normal: Solo puede asignarse a sí mismo');
-                    }
+                    restoreNormalSelect(selectUsuario, currentUser);
+                    console.log('Usuario normal: Solo puede asignarse a sí mismo');
                 }
             }
         } catch (error) {
@@ -850,30 +919,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const currentUser = window.CURRENT_USER;
                 const isAdmin = currentUser && currentUser.is_admin == 1;
 
-                selectUsuario.innerHTML = '<option value="">Seleccionar usuario</option>';
-
                 if (isAdmin) {
-                    // ADMIN: Ver todos los usuarios activos
-                    usuariosActivos.forEach(user => {
-                        const option = document.createElement('option');
-                        option.value = user.id;
-                        option.textContent = user.name;
-                        selectUsuario.appendChild(option);
-                    });
-                    console.log(`Admin: ${usuariosActivos.length} usuarios cargados`);
+                    buildAdminMultiSelect(selectUsuario, usuariosActivos);
+                    console.log(`Admin: ${usuariosActivos.length} usuarios cargados (checkboxes)`);
                 } else {
-                    // USUARIO NORMAL: Solo puede asignarse a sí mismo
-                    const currentUserActive = usuariosActivos.find(user =>
-                        user.id == currentUser.id
-                    );
-
-                    if (currentUserActive) {
-                        const option = document.createElement('option');
-                        option.value = currentUser.id;
-                        option.textContent = currentUser.name + ' (Yo)';
-                        selectUsuario.appendChild(option);
-                        console.log('Usuario normal: Solo puede asignarse a sí mismo');
-                    }
+                    restoreNormalSelect(selectUsuario, currentUser);
+                    console.log('Usuario normal: Solo puede asignarse a sí mismo');
                 }
             }
         } catch (error) {

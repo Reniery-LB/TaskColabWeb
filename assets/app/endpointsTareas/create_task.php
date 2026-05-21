@@ -30,13 +30,25 @@ try {
         throw new Exception("El título es obligatorio");
     }
     
-    // Validar assigned_to (puede ser null o vacío)
-    $assigned_to = null;
-    if (isset($input['assigned_to']) && !empty($input['assigned_to'])) {
-        $assigned_to = (int)$input['assigned_to'];
-        if ($assigned_to <= 0) {
-            $assigned_to = null;
+    $userId = (int)$_SESSION['user']['id'];
+    $isAdmin = !empty($_SESSION['user']['is_admin']);
+
+    // Validar assigned_to. Admin puede asignar a varios; usuario normal solo a sí mismo.
+    $assigned_to = [];
+    if ($isAdmin) {
+        $rawAssigned = $input['assigned_to'] ?? [];
+        if (!is_array($rawAssigned)) {
+            $rawAssigned = $rawAssigned ? [$rawAssigned] : [];
         }
+        foreach ($rawAssigned as $assignedId) {
+            $assignedId = (int)$assignedId;
+            if ($assignedId > 0) {
+                $assigned_to[] = $assignedId;
+            }
+        }
+        $assigned_to = array_values(array_unique($assigned_to));
+    } else {
+        $assigned_to = [$userId];
     }
     
     // Validar due_date (puede ser null o vacío)
@@ -46,12 +58,13 @@ try {
         // Verificar formato de fecha
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $due_date)) {
             $due_date = null;
+        } elseif ($due_date < date('Y-m-d')) {
+            throw new Exception('La fecha límite no puede ser anterior al día de hoy');
         }
     }
     
     $taskModel = new TaskModel();
     $projectModel = new ProjectModel();
-    $userId = $_SESSION['user']['id'];
     $defaultProject = $projectModel->getOrCreateDefaultProject((int)$userId);
     $boardId = isset($input['board_id']) ? (int)$input['board_id'] : (int)($defaultProject['board_id'] ?? 1);
 
@@ -73,7 +86,7 @@ try {
     $taskData = [
         'title' => trim($input['title']),
         'description' => isset($input['description']) ? trim($input['description']) : '',
-        'assigned_to' => $assigned_to, // Puede ser null
+        'assigned_to' => $assigned_to,
         'status' => isset($input['status']) ? $input['status'] : 'Pendiente',
         'priority' => isset($input['priority']) ? $input['priority'] : 'Media',
         'due_date' => $due_date, // Puede ser null

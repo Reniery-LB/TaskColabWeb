@@ -2531,6 +2531,73 @@ select {
   color: rgba(0, 0, 0, 0.5);
 }
 
+.multiselect-usuarios {
+  width: 100%;
+  margin-top: 5px;
+  border: 2px solid #1b5cff;
+  border-radius: 8px;
+  background: #ffffff;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.multiselect-hint {
+  padding: 10px 12px;
+  background: #1b5cff;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.multiselect-options {
+  max-height: 180px;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.multiselect-option {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  margin: 0 !important;
+  padding: 9px 10px;
+  border-radius: 6px;
+  color: #172033 !important;
+  font-size: 15px !important;
+  font-weight: 500 !important;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.multiselect-option:hover,
+.multiselect-option.checked {
+  background: rgba(27, 92, 255, 0.12);
+  color: #1b5cff !important;
+}
+
+.multiselect-option input[type="checkbox"] {
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  accent-color: #1b5cff;
+  flex: 0 0 16px;
+  cursor: pointer;
+}
+
+.multiselect-options::-webkit-scrollbar {
+  width: 8px;
+}
+
+.multiselect-options::-webkit-scrollbar-track {
+  background: #eef2ff;
+}
+
+.multiselect-options::-webkit-scrollbar-thumb {
+  background: #1b5cff;
+  border-radius: 8px;
+}
+
 /* Input de fecha */
 .form-tarjeta input[type="date"] {
   color: white;

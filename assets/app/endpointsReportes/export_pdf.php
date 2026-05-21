@@ -31,18 +31,15 @@ $isAdminStmt->execute([$userId]);
 $isAdmin = (int)$isAdminStmt->fetchColumn() === 1;
 
 $scopeSql = $isAdmin ? "1 = 1" : "
-    (
-        t.created_by = :scope_user_id
-        OR EXISTS (
-            SELECT 1
-            FROM task_assignments ta_scope
-            WHERE ta_scope.task_id = t.id
-              AND ta_scope.user_id = :scope_user_id_exists
-        )
+    EXISTS (
+        SELECT 1
+        FROM task_assignments ta_scope
+        WHERE ta_scope.task_id = t.id
+          AND ta_scope.user_id = :scope_user_id
     )
 ";
 $baseWhere = "t.is_active = 1 AND {$scopeSql}";
-$params = $isAdmin ? [] : [':scope_user_id' => $userId, ':scope_user_id_exists' => $userId];
+$params = $isAdmin ? [] : [':scope_user_id' => $userId];
 
 $general = fetchOne($pdo, "
     SELECT
@@ -69,6 +66,8 @@ $states = normalizeStates(fetchAll($pdo, "
     GROUP BY t.status
 ", $params));
 
+$activeUsersScopeSql = $isAdmin ? "1 = 1" : "ta.user_id = :active_scope_user_id";
+$activeUsersParams = $isAdmin ? [] : [':active_scope_user_id' => $userId];
 $users = fetchAll($pdo, "
     SELECT
         u.name AS usuario,
@@ -78,11 +77,12 @@ $users = fetchAll($pdo, "
     INNER JOIN task_assignments ta ON ta.user_id = u.id
     INNER JOIN tasks t ON t.id = ta.task_id AND t.is_active = 1
     WHERE u.is_active = 1
+      AND {$activeUsersScopeSql}
     GROUP BY u.id, u.name
     HAVING tareas_asignadas > 0
     ORDER BY tareas_asignadas DESC
     LIMIT 7
-");
+", $activeUsersParams);
 
 $weeks = normalizeWeeks(fetchAll($pdo, "
     SELECT

@@ -48,6 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    if (!isFutureOrToday(payload.due_date)) {
+      showProjectError('La fecha objetivo no puede ser anterior al día de hoy.');
+      return;
+    }
+
     try {
       const response = await fetch(`${apiBase}/create_project.php`, {
         method: 'POST',
@@ -90,6 +95,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!payload.name) {
       showProjectError('El nombre del proyecto es obligatorio.');
+      return;
+    }
+
+    if (!isFutureOrToday(payload.due_date)) {
+      showProjectError('La fecha objetivo no puede ser anterior al día de hoy.');
       return;
     }
 
@@ -216,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const total = Number(project.total_tasks || 0);
       const done = Number(project.done_tasks || 0);
       const inProgress = Number(project.in_progress_tasks || 0);
-      const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+      const progress = clampPercent(total > 0 ? Math.round((done / total) * 100) : 0);
       const isActive = activeProject && Number(activeProject.id) === Number(project.id);
       const statusLabel = getStatusLabel(project.status);
 
@@ -283,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const total = Number(activeProject.total_tasks || 0);
     const inProgress = Number(activeProject.in_progress_tasks || 0);
     const done = Number(activeProject.done_tasks || 0);
-    const progress = total > 0 ? Math.round((done / total) * 100) : 0;
+    const progress = clampPercent(total > 0 ? Math.round((done / total) * 100) : 0);
 
     if (detailName) detailName.textContent = activeProject.name || 'Proyecto';
     if (detailDescription) {
@@ -361,6 +371,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const date = new Date(`${value}T12:00:00`);
     if (Number.isNaN(date.getTime())) return value;
     return date.toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  function clampPercent(value) {
+    return Math.max(0, Math.min(100, Number(value) || 0));
+  }
+
+  function todayISO() {
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+    return today.toISOString().slice(0, 10);
+  }
+
+  function isFutureOrToday(value) {
+    return !value || value >= todayISO();
   }
 
   function escapeHtml(value) {

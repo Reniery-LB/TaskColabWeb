@@ -81,8 +81,14 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
       }
 
-      // Guardar la sección anterior
-      seccionAntesDeEliminar = document.querySelector(".seccion.activa")?.id || "tareas";
+      // Guardar la sección anterior. Si otra alerta se abre encima de la alerta
+      // actual, conservar el regreso real para que "Cancelar" no deje el modal abierto.
+      const seccionActiva = document.querySelector(".seccion.activa")?.id;
+      if (seccionActiva && seccionActiva !== "eliminarTarjeta") {
+          seccionAntesDeEliminar = seccionActiva;
+      } else if (!seccionAntesDeEliminar || seccionAntesDeEliminar === "eliminarTarjeta") {
+          seccionAntesDeEliminar = config.seccionRetorno || "inicio";
+      }
 
       // Configurar contenido básico
       tituloAlerta.textContent = titulo;
@@ -639,12 +645,36 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "../../assets/app/logout.php";
   });
 
+  function getTodayLocalISO() {
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+    return today.toISOString().slice(0, 10);
+  }
+
   document.querySelectorAll('input[type="date"]').forEach((input) => {
+    const today = getTodayLocalISO();
     input.setAttribute('lang', 'es-MX');
     input.setAttribute('inputmode', 'none');
+    input.setAttribute('min', today);
     input.addEventListener('keydown', (event) => event.preventDefault());
     input.addEventListener('paste', (event) => event.preventDefault());
     input.addEventListener('drop', (event) => event.preventDefault());
+    input.addEventListener('change', () => {
+      const min = input.getAttribute('min') || getTodayLocalISO();
+      if (input.value && input.value < min) {
+        input.value = '';
+        if (typeof window.configurarAlerta === 'function') {
+          window.configurarAlerta(
+            'Fecha no válida',
+            'Selecciona una fecha de hoy en adelante.',
+            'alerta',
+            { soloAceptar: true }
+          );
+        } else {
+          alert('Selecciona una fecha de hoy en adelante.');
+        }
+      }
+    });
     input.addEventListener('click', () => {
       if (typeof input.showPicker === 'function') input.showPicker();
     });
@@ -667,6 +697,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const contenedorTableros = document.querySelector("#tableros");
 
   contenedorTableros?.addEventListener("click", (e) => {
+    if (e.target.closest(".eliminar, .mover-izq, .mover-der")) {
+      return;
+    }
+
     const btnEliminar = e.target.closest(".eliminar");
     const btnMoverIzq = e.target.closest(".mover-izq");
     const btnMoverDer = e.target.closest(".mover-der");

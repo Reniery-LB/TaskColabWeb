@@ -34,14 +34,11 @@ try {
     $isAdmin = (int)$isAdminStmt->fetchColumn() === 1;
 
     $scopeSql = $isAdmin ? "1 = 1" : "
-        (
-            t.created_by = :scope_user_id
-            OR EXISTS (
-                SELECT 1
-                FROM task_assignments ta_scope
-                WHERE ta_scope.task_id = t.id
-                  AND ta_scope.user_id = :scope_user_id_exists
-            )
+        EXISTS (
+            SELECT 1
+            FROM task_assignments ta_scope
+            WHERE ta_scope.task_id = t.id
+              AND ta_scope.user_id = :scope_user_id
         )
     ";
 
@@ -50,7 +47,6 @@ try {
     $params = [];
     if (!$isAdmin) {
         $params[':scope_user_id'] = $userId;
-        $params[':scope_user_id_exists'] = $userId;
     }
 
     $general = fetchOne($pdo, "
@@ -79,6 +75,8 @@ try {
     ", $params);
     $stateDistribution = normalizeStates($stateDistribution);
 
+    $activeUsersScopeSql = $isAdmin ? "1 = 1" : "ta.user_id = :active_scope_user_id";
+    $activeUsersParams = $isAdmin ? [] : [':active_scope_user_id' => $userId];
     $activeUsers = fetchAll($pdo, "
         SELECT
             u.id,
@@ -91,11 +89,12 @@ try {
         INNER JOIN task_assignments ta ON ta.user_id = u.id
         INNER JOIN tasks t ON t.id = ta.task_id AND t.is_active = 1
         WHERE u.is_active = 1
+          AND {$activeUsersScopeSql}
         GROUP BY u.id, u.name, u.email
         HAVING tareas_asignadas > 0
         ORDER BY tareas_asignadas DESC, tareas_completadas DESC
         LIMIT 8
-    ");
+    ", $activeUsersParams);
     $totalAssigned = array_sum(array_map(fn($item) => (int)$item['tareas_asignadas'], $activeUsers));
     foreach ($activeUsers as &$user) {
         $assigned = (int)$user['tareas_asignadas'];

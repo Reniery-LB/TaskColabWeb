@@ -363,9 +363,42 @@ class ReportsManager {
     }
   }
 
-  exportToPDF() {
+  async exportToPDF() {
     this.showToast('Generando PDF moderno...', 'info');
-    window.open(`${this.baseUrl}/export_pdf.php`, '_blank');
+
+    try {
+      const response = await fetch(`${this.baseUrl}/export_pdf.php?t=${Date.now()}`, {
+        credentials: 'include',
+        cache: 'no-cache'
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || 'No se pudo exportar el PDF');
+      }
+
+      const blob = await response.blob();
+      const contentType = response.headers.get('Content-Type') || '';
+      if (!contentType.includes('application/pdf')) {
+        throw new Error('El servidor no devolvió un archivo PDF válido');
+      }
+
+      const disposition = response.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="?([^"]+)"?/i);
+      const filename = match?.[1] || `reporte_taskcolab_${new Date().toISOString().slice(0, 10)}.pdf`;
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      this.showToast('PDF exportado correctamente', 'success');
+    } catch (error) {
+      console.error('Error exportando PDF:', error);
+      this.showToast(error.message || 'Error al exportar el PDF', 'error');
+    }
   }
 
   fallbackData() {
