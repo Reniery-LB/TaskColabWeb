@@ -51,8 +51,8 @@ if ($new_password !== $confirm_password) {
     exit;
 }
 
-if (strlen($new_password) < 6) {
-    echo json_encode(['ok' => false, 'message' => 'La contraseña debe tener al menos 6 caracteres']);
+if (strlen($new_password) < 8) {
+    echo json_encode(['ok' => false, 'message' => 'La contraseña debe tener al menos 8 caracteres']);
     exit;
 }
 

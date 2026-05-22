@@ -1,14 +1,10 @@
 // assets/javascript/menu.js
 document.addEventListener("DOMContentLoaded", () => {
-  // Ocultar la casita y el botón admin inmediatamente al cargar
+  // Ocultar el Home mientras ya estamos en Inicio.
   setTimeout(() => {
     const linkCasita = document.querySelector('.sidebar a[data-section="inicio"]');
-    const botonAdmin = document.querySelector('.sidebar a[data-section="admin"]');
     if (linkCasita) {
       linkCasita.style.display = "none";
-    }
-    if (botonAdmin) {
-      botonAdmin.style.display = "none";
     }
   }, 10);
 
@@ -22,6 +18,25 @@ document.addEventListener("DOMContentLoaded", () => {
   // Hacer mostrarSeccion global para que users.js pueda acceder
   window.mostrarSeccion = (id) => {
     console.log("Mostrando sección:", id);
+    const activeSectionMap = {
+        "formulario-tarjeta": "tableros",
+        "eliminarTarjeta": "tableros",
+        "formulario-tarea": "tareas",
+        "detalle-usuario": "usuarios",
+        "formulario-admin": "admin",
+        "editar-admin": "admin"
+    };
+    const navSectionId = activeSectionMap[id] || id;
+
+    document.querySelectorAll(".sidebar a").forEach((link) => {
+        const isActive = link.dataset.section === navSectionId;
+        link.classList.toggle("active", isActive);
+        if (isActive) {
+            link.setAttribute("aria-current", "page");
+        } else {
+            link.removeAttribute("aria-current");
+        }
+    });
     
     // 1. Ocultar TODAS las secciones
     document.querySelectorAll(".seccion").forEach((s) => {
@@ -49,11 +64,6 @@ document.addEventListener("DOMContentLoaded", () => {
         linkCasita.style.display = (id === "inicio") ? "none" : "flex";
     }
     
-    // Mostrar el botón admin SOLO cuando se clickee "usuarios"
-    const botonAdmin = document.querySelector('.sidebar a[data-section="admin"]');
-    if (botonAdmin) {
-        botonAdmin.style.display = (id === "usuarios") ? "flex" : "none";
-    }
   };
 
   // Hacer configurarAlerta global para que users.js pueda acceder
@@ -71,8 +81,14 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
       }
 
-      // Guardar la sección anterior
-      seccionAntesDeEliminar = document.querySelector(".seccion.activa")?.id || "tareas";
+      // Guardar la sección anterior. Si otra alerta se abre encima de la alerta
+      // actual, conservar el regreso real para que "Cancelar" no deje el modal abierto.
+      const seccionActiva = document.querySelector(".seccion.activa")?.id;
+      if (seccionActiva && seccionActiva !== "eliminarTarjeta") {
+          seccionAntesDeEliminar = seccionActiva;
+      } else if (!seccionAntesDeEliminar || seccionAntesDeEliminar === "eliminarTarjeta") {
+          seccionAntesDeEliminar = config.seccionRetorno || "inicio";
+      }
 
       // Configurar contenido básico
       tituloAlerta.textContent = titulo;
@@ -449,6 +465,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  document.querySelectorAll("[data-go-section]").forEach((button) => {
+    button.addEventListener("click", () => {
+      window.mostrarSeccion(button.dataset.goSection);
+    });
+  });
+
   // Mostrar INICIO por defecto
   window.mostrarSeccion("inicio");
 
@@ -600,7 +622,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // });
 
   // --- CERRAR SESIÓN ---
-  const iconCerrar = document.querySelector(".user-info a img");
+  const iconCerrar = document.querySelector(".header-logout-link img");
   const cancelarCerrar = document.getElementById("cancelarCerrarSesion");
   const confirmarCerrar = document.getElementById("confirmarCerrarSesion");
 
@@ -620,13 +642,65 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   confirmarCerrar?.addEventListener("click", () => {
-    window.location.href = "../../index.html";
+    window.location.href = "../../assets/app/logout.php";
+  });
+
+  function getTodayLocalISO() {
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+    return today.toISOString().slice(0, 10);
+  }
+
+  document.querySelectorAll('input[type="date"]').forEach((input) => {
+    const today = getTodayLocalISO();
+    input.setAttribute('lang', 'es-MX');
+    input.setAttribute('inputmode', 'none');
+    input.setAttribute('min', today);
+    input.addEventListener('keydown', (event) => event.preventDefault());
+    input.addEventListener('paste', (event) => event.preventDefault());
+    input.addEventListener('drop', (event) => event.preventDefault());
+    input.addEventListener('change', () => {
+      const min = input.getAttribute('min') || getTodayLocalISO();
+      if (input.value && input.value < min) {
+        input.value = '';
+        if (typeof window.configurarAlerta === 'function') {
+          window.configurarAlerta(
+            'Fecha no válida',
+            'Selecciona una fecha de hoy en adelante.',
+            'alerta',
+            { soloAceptar: true }
+          );
+        } else {
+          alert('Selecciona una fecha de hoy en adelante.');
+        }
+      }
+    });
+    input.addEventListener('click', () => {
+      if (typeof input.showPicker === 'function') input.showPicker();
+    });
+  });
+
+  document.querySelectorAll('.date-picker-button').forEach((button) => {
+    button.addEventListener('click', () => {
+      const input = document.getElementById(button.dataset.dateTarget || '');
+      if (!input) return;
+      input.focus();
+      if (typeof input.showPicker === 'function') {
+        input.showPicker();
+      } else {
+        input.click();
+      }
+    });
   });
 
   // --- ACCIONES EN TARJETAS (eliminar / mover) ---
   const contenedorTableros = document.querySelector("#tableros");
 
   contenedorTableros?.addEventListener("click", (e) => {
+    if (e.target.closest(".eliminar, .mover-izq, .mover-der")) {
+      return;
+    }
+
     const btnEliminar = e.target.closest(".eliminar");
     const btnMoverIzq = e.target.closest(".mover-izq");
     const btnMoverDer = e.target.closest(".mover-der");

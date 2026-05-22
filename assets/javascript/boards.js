@@ -26,6 +26,89 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // API base para tableros
     const apiBase = window.API_BASE_TABLEROS || '/assets/app/endpointsTableros';
+
+    function getActiveBoardId() {
+        return window.TaskColabProjects?.getActiveBoardId?.() || 1;
+    }
+
+    function getSelectedUserIds(select) {
+        if (!select) return [];
+        const container = select.parentElement?.querySelector('.multiselect-usuarios');
+        if (container) {
+            return Array.from(container.querySelectorAll('input[type="checkbox"]:checked'))
+                .map(cb => cb.value).filter(Boolean);
+        }
+        return Array.from(select.selectedOptions || [])
+            .map(option => option.value).filter(Boolean);
+    }
+
+    function buildAdminMultiSelect(selectEl, usuarios) {
+        selectEl.style.display = 'none';
+        selectEl.multiple = false;
+        selectEl.innerHTML = '';
+        selectEl.removeAttribute('size');
+        const old = selectEl.parentElement.querySelector('.multiselect-usuarios');
+        if (old) old.remove();
+        const container = document.createElement('div');
+        container.className = 'multiselect-usuarios';
+        container.id = 'multiselect-' + selectEl.id;
+        const hint = document.createElement('div');
+        hint.className = 'multiselect-hint';
+        hint.textContent = 'Haz clic para seleccionar uno o varios usuarios';
+        container.appendChild(hint);
+        const list = document.createElement('div');
+        list.className = 'multiselect-options';
+        usuarios.forEach(user => {
+            const lbl = document.createElement('label');
+            lbl.className = 'multiselect-option';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.value = user.id;
+            cb.addEventListener('change', () => {
+                lbl.classList.toggle('checked', cb.checked);
+                const n = container.querySelectorAll('input:checked').length;
+                hint.textContent = n > 0 ? n + ' usuario(s) seleccionado(s)' : 'Haz clic para seleccionar uno o varios usuarios';
+            });
+            const sp = document.createElement('span');
+            sp.textContent = user.name;
+            lbl.appendChild(cb); lbl.appendChild(sp);
+            list.appendChild(lbl);
+        });
+        container.appendChild(list);
+        selectEl.insertAdjacentElement('afterend', container);
+    }
+
+    function restoreNormalSelect(selectEl, currentUser) {
+        selectEl.style.display = '';
+        selectEl.multiple = false;
+        selectEl.removeAttribute('size');
+        const old = selectEl.parentElement.querySelector('.multiselect-usuarios');
+        if (old) old.remove();
+        selectEl.innerHTML = '<option value="">Seleccionar usuario</option>';
+        const opt = document.createElement('option');
+        opt.value = currentUser.id;
+        opt.textContent = currentUser.name + ' (Yo)';
+        selectEl.appendChild(opt);
+        selectEl.value = String(currentUser.id);
+    }
+
+    function clearMultiSelect(selectEl) {
+        const c = selectEl?.parentElement?.querySelector('.multiselect-usuarios');
+        if (c) {
+            c.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+                cb.closest('.multiselect-option')?.classList.remove('checked');
+            });
+            const hint = c.querySelector('.multiselect-hint');
+            if (hint) hint.textContent = 'Haz clic para seleccionar uno o varios usuarios';
+        }
+    }
+
+    function isFutureOrToday(value) {
+        if (!value) return true;
+        const today = new Date();
+        today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+        return value >= today.toISOString().slice(0, 10);
+    }
     
     // === Click directo en el botón submit ===
     // const btnCrearTarjeta = document.querySelector('#form-tarjeta button[type="submit"]');
@@ -104,7 +187,8 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             console.log('Cargando tablero...');
             const timestamp = new Date().getTime();
-            const url = `${apiBase}/get_board_tasks.php?t=${timestamp}`;
+            const boardId = getActiveBoardId();
+            const url = `${apiBase}/get_board_tasks.php?board_id=${encodeURIComponent(boardId)}&t=${timestamp}`;
 
             const res = await fetch(url, {
                 method: 'GET',
@@ -137,6 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // === RENDERIZAR TABLERO ===
     function renderBoard(board) {
         console.log('Renderizando tablero...');
+        updateBoardMetrics(board);
 
         // Limpiar columnas
         Object.values(columnas).forEach(col => {
@@ -152,7 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             if (tasks.length === 0) {
-                columna.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Sin tareas</p>';
+                columna.innerHTML = createEmptyState(columnKey);
                 continue;
             }
 
@@ -168,7 +253,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // === CREAR TARJETA ===
     function createCard(task, column) {
         const card = document.createElement('div');
-        card.className = 'tarjeta';
+        const prioridad = task.priority || 'Media';
+        card.className = `tarjeta prioridad-${normalizePriority(prioridad)}`;
         card.dataset.taskId = task.id;
         card.dataset.column = column;
 
@@ -178,25 +264,26 @@ document.addEventListener('DOMContentLoaded', function() {
         // Usuarios asignados
         const usuarios = task.assigned_users || 'Sin asignar';
 
-        // Prioridad
-        const prioridad = task.priority || 'Media';
-
         // Determinar qué botones mostrar según la columna
         const mostrarIzq = column !== 'pending';
         const mostrarDer = column !== 'done';
 
         card.innerHTML = `
-            <h4>${escapeHtml(task.title)}</h4>
-            <p><img src="../../assets/img/icono-calendario.png" class="icono"> ${fecha}</p>
-            <p><img src="../../assets/img/icono-usuario.png" class="icono"> ${escapeHtml(usuarios)}</p>
-            <p><img src="../../assets/img/icono-prioridad.png" class="icono"> ${escapeHtml(prioridad)}</p>
+            <div class="tarjeta-header">
+                <h4>${escapeHtml(task.title)}</h4>
+                <span class="priority-pill">${escapeHtml(prioridad)}</span>
+            </div>
+            <div class="tarjeta-meta">
+                <p><img src="../../assets/img/icono-calendario.png" class="icono" alt=""> ${fecha}</p>
+                <p><img src="../../assets/img/icono-usuario.png" class="icono" alt=""> ${escapeHtml(usuarios)}</p>
+            </div>
             <div class="botones-tarjeta">
-                <button class="eliminar" data-task-id="${task.id}">
+                <button class="eliminar" data-task-id="${task.id}" aria-label="Eliminar tarjeta">
                     <img src="../../assets/img/basura.png" class="delete-card" alt="Eliminar">
                 </button>
                 <div class="botones-derecha">
-                    ${mostrarIzq ? `<button class="mover-izq" data-task-id="${task.id}" data-direction="left"><</button>` : ''}
-                    ${mostrarDer ? `<button class="mover-der" data-task-id="${task.id}" data-direction="right">></button>` : ''}
+                    ${mostrarIzq ? `<button class="mover-izq" data-task-id="${task.id}" data-direction="left" aria-label="Mover a columna anterior">&lt;</button>` : ''}
+                    ${mostrarDer ? `<button class="mover-der" data-task-id="${task.id}" data-direction="right" aria-label="Mover a columna siguiente">&gt;</button>` : ''}
                 </div>
             </div>
         `;
@@ -206,11 +293,65 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // === LIMPIAR TABLERO ===
     function limpiarTablero() {
+        updateBoardMetrics({ pending: [], in_progress: [], done: [] });
         Object.values(columnas).forEach(col => {
             if (col) {
-                col.innerHTML = '<p style="text-align: center; color: #999; padding: 20px;">Sin tareas</p>';
+                const columnKey = Object.keys(columnas).find(key => columnas[key] === col) || 'pending';
+                col.innerHTML = createEmptyState(columnKey);
             }
         });
+    }
+
+    function updateBoardMetrics(board = {}) {
+        const counts = {
+            pending: Array.isArray(board.pending) ? board.pending.length : 0,
+            in_progress: Array.isArray(board.in_progress) ? board.in_progress.length : 0,
+            done: Array.isArray(board.done) ? board.done.length : 0
+        };
+        const total = counts.pending + counts.in_progress + counts.done;
+
+        document.querySelectorAll('[data-count-column]').forEach((item) => {
+            const column = item.dataset.countColumn;
+            item.textContent = counts[column] ?? 0;
+        });
+
+        const pendingCount = document.getElementById('inicio-pending-count');
+        const progressCount = document.getElementById('inicio-progress-count');
+        const doneCount = document.getElementById('inicio-done-count');
+        const boardSummary = document.getElementById('board-summary');
+
+        if (pendingCount) pendingCount.textContent = counts.pending;
+        if (progressCount) progressCount.textContent = counts.in_progress;
+        if (doneCount) doneCount.textContent = counts.done;
+        if (boardSummary) {
+            boardSummary.textContent = total === 0
+                ? 'Tu tablero esta listo para recibir la primera tarea.'
+                : `${total} tareas activas: ${counts.pending} pendientes, ${counts.in_progress} en proceso y ${counts.done} completadas.`;
+        }
+    }
+
+    function createEmptyState(columnKey) {
+        const messages = {
+            pending: 'Sin pendientes por iniciar',
+            in_progress: 'Nada en proceso ahora',
+            done: 'Aun no hay tareas completadas'
+        };
+
+        return `
+            <div class="kanban-empty">
+                <span></span>
+                <p>${messages[columnKey] || 'Sin tareas'}</p>
+            </div>
+        `;
+    }
+
+    function normalizePriority(priority) {
+        return String(priority || 'media')
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/\s+prioridad/g, '')
+            .trim();
     }
 
     // === BOTONES "+" PARA AÑADIR TARJETA ===
@@ -277,7 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Leer desde FormData 
         const titulo = formData.get('titulo-tarjeta')?.trim() || '';
         const descripcion = formData.get('descripcion-tarjeta')?.trim() || '';
-        const usuarioId = formData.get('asignar-tarjeta') || '';
+        const usuarioId = getSelectedUserIds(selectUsuario);
         const prioridad = formData.get('prioridad-tarjeta') || 'Media prioridad';
         const fecha = formData.get('fecha-tarjeta') || '';
         
@@ -310,6 +451,11 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("   FormData titulo:", titulo);
             console.error("   Variable titulo:", tituloBackup);
             mostrarError('Por favor, ingresa un título para la tarjeta');
+            return;
+        }
+
+        if (!isFutureOrToday(fecha)) {
+            mostrarError('La fecha límite no puede ser anterior al día de hoy');
             return;
         }
         
@@ -347,8 +493,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 column: datos.columna, // pending, in_progress, done
                 priority: priorityMap[datos.prioridad] || 'Media', 
                 due_date: datos.fecha || null,
-                assigned_to: datos.usuarioId ? parseInt(datos.usuarioId) : null,
-                board_id: 1 // Por defecto, tablero principal
+                assigned_to: Array.isArray(datos.usuarioId)
+                    ? datos.usuarioId.map(id => parseInt(id)).filter(id => id > 0)
+                    : (datos.usuarioId ? parseInt(datos.usuarioId) : null),
+                board_id: getActiveBoardId()
             };
 
             console.log('Payload final:', payload);
@@ -368,6 +516,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Limpiar formulario
                 formTarjeta?.reset();
+                clearMultiSelect(selectUsuario);
 
                 // Recargar tablero
                 await loadBoard();
@@ -581,30 +730,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const currentUser = window.CURRENT_USER;
                 const isAdmin = currentUser && currentUser.is_admin == 1;
 
-                selectUsuario.innerHTML = '<option value="">Seleccionar usuario</option>';
-
                 if (isAdmin) {
-                    // ADMIN: Ver todos los usuarios activos
-                    usuariosActivos.forEach(user => {
-                        const option = document.createElement('option');
-                        option.value = user.id;
-                        option.textContent = user.name;
-                        selectUsuario.appendChild(option);
-                    });
-                    console.log(`Admin: ${usuariosActivos.length} usuarios cargados`);
+                    buildAdminMultiSelect(selectUsuario, usuariosActivos);
+                    console.log(`Admin: ${usuariosActivos.length} usuarios cargados (checkboxes)`);
                 } else {
-                    // USUARIO NORMAL: Solo puede asignarse a sí mismo
-                    const currentUserActive = usuariosActivos.find(user =>
-                        user.id == currentUser.id
-                    );
-
-                    if (currentUserActive) {
-                        const option = document.createElement('option');
-                        option.value = currentUser.id;
-                        option.textContent = currentUser.name + ' (Yo)';
-                        selectUsuario.appendChild(option);
-                        console.log('Usuario normal: Solo puede asignarse a sí mismo');
-                    }
+                    restoreNormalSelect(selectUsuario, currentUser);
+                    console.log('Usuario normal: Solo puede asignarse a sí mismo');
                 }
             }
         } catch (error) {
@@ -644,9 +775,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             return date.toLocaleDateString('es-MX', {
-                year: 'numeric',
-                month: '2-digit',
                 day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
                 timeZone: 'America/Mazatlan'
             });
         } catch (error) {
@@ -721,6 +852,11 @@ document.addEventListener('DOMContentLoaded', function() {
         loadBoard(); 
     });
 
+    window.addEventListener('taskcolab:projectChanged', (event) => {
+        console.log('Proyecto activo cambiado:', event.detail);
+        loadBoard();
+    });
+
     // === DISPARAR EVENTOS MEJORADOS ===
     function dispararEventoActualizacion(tipo, detalles = {}) {
         console.log(`Disparando eventos de ${tipo}...`);
@@ -783,30 +919,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 const currentUser = window.CURRENT_USER;
                 const isAdmin = currentUser && currentUser.is_admin == 1;
 
-                selectUsuario.innerHTML = '<option value="">Seleccionar usuario</option>';
-
                 if (isAdmin) {
-                    // ADMIN: Ver todos los usuarios activos
-                    usuariosActivos.forEach(user => {
-                        const option = document.createElement('option');
-                        option.value = user.id;
-                        option.textContent = user.name;
-                        selectUsuario.appendChild(option);
-                    });
-                    console.log(`Admin: ${usuariosActivos.length} usuarios cargados`);
+                    buildAdminMultiSelect(selectUsuario, usuariosActivos);
+                    console.log(`Admin: ${usuariosActivos.length} usuarios cargados (checkboxes)`);
                 } else {
-                    // USUARIO NORMAL: Solo puede asignarse a sí mismo
-                    const currentUserActive = usuariosActivos.find(user =>
-                        user.id == currentUser.id
-                    );
-
-                    if (currentUserActive) {
-                        const option = document.createElement('option');
-                        option.value = currentUser.id;
-                        option.textContent = currentUser.name + ' (Yo)';
-                        selectUsuario.appendChild(option);
-                        console.log('Usuario normal: Solo puede asignarse a sí mismo');
-                    }
+                    restoreNormalSelect(selectUsuario, currentUser);
+                    console.log('Usuario normal: Solo puede asignarse a sí mismo');
                 }
             }
         } catch (error) {

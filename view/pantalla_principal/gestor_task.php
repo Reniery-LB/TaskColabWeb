@@ -6,42 +6,201 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestor de Tareas</title>
-  <link rel="stylesheet" href="../../assets/styles/pantallas.css">
+  <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260520-1">
 </head>
 <body>
   <!-- CONTENIDO PRINCIPAL -->
   <main class="main-content">
     <!-- INICIO -->
     <section id="inicio" class="seccion activa">
-      <h2>Bienvenido a <span class="task-blue">Task</span>Colab</h2>
       <?php
       $userName = $_SESSION['user']['name'] ?? 'Invitado';
       ?>
-      <p>¡Bienvenido a tu espacio de trabajo, <?php echo htmlspecialchars($userName, ENT_QUOTES); ?>!</p>
+      <div class="inicio-hero-copy">
+        <span class="inicio-eyebrow">Panel de productividad</span>
+        <h2>Bienvenido a <span class="task-blue">Task</span>Colab</h2>
+        <p>Organiza tu trabajo, revisa pendientes y avanza con tu equipo desde un solo espacio, <?php echo htmlspecialchars($userName, ENT_QUOTES); ?>.</p>
+        <div class="inicio-actions">
+          <button type="button" class="inicio-action primary" data-go-section="proyectos">Crear proyecto</button>
+          <button type="button" class="inicio-action primary" data-go-section="tableros">Ver tablero</button>
+          <button type="button" class="inicio-action secondary" data-go-section="formulario-tarea">Nueva tarea</button>
+        </div>
+      </div>
+
+      <div class="inicio-resumen" aria-label="Resumen del tablero">
+        <article class="inicio-stat">
+          <span class="inicio-stat-label">Pendientes</span>
+          <strong id="inicio-pending-count">0</strong>
+        </article>
+        <article class="inicio-stat">
+          <span class="inicio-stat-label">En proceso</span>
+          <strong id="inicio-progress-count">0</strong>
+        </article>
+        <article class="inicio-stat">
+          <span class="inicio-stat-label">Completadas</span>
+          <strong id="inicio-done-count">0</strong>
+        </article>
+      </div>
+    </section>
+
+    <!-- PROYECTOS -->
+    <section id="proyectos" class="seccion">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Organización</span>
+          <h2 class="titulo">Proyectos</h2>
+        </div>
+        <p>Centraliza tareas, tableros y próximos avances por proyecto.</p>
+      </div>
+
+      <div class="projects-layout">
+        <div class="project-create-panel">
+          <h3>Nuevo proyecto</h3>
+          <form id="form-proyecto">
+            <label for="project-name">Nombre</label>
+            <input id="project-name" name="name" type="text" placeholder="Ej: Rediseño TaskColab Web" required autocomplete="off">
+
+            <label for="project-description">Descripción</label>
+            <textarea id="project-description" name="description" placeholder="Objetivo, alcance o entregables principales"></textarea>
+
+            <div class="project-form-grid">
+              <div>
+                <label for="project-due-date">Fecha objetivo</label>
+                <div class="date-input-wrap">
+                  <input id="project-due-date" name="due_date" type="date" lang="es-MX" inputmode="none" min="<?php echo date('Y-m-d'); ?>">
+                  <button type="button" class="date-picker-button" aria-label="Abrir calendario" data-date-target="project-due-date">
+                    <img src="../../assets/img/icono-calendario.png" alt="">
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label for="project-color">Color</label>
+                <input id="project-color" name="color" type="color" value="#1B5CFF">
+              </div>
+            </div>
+
+            <button type="submit" class="crear">Crear proyecto</button>
+          </form>
+        </div>
+
+        <div class="project-list-panel">
+          <div class="project-list-header">
+            <h3>Espacios activos</h3>
+            <span id="projects-count">0 proyectos</span>
+          </div>
+
+          <div class="project-control-panel" id="project-control-panel">
+            <div class="project-control-heading">
+              <div>
+                <span class="section-kicker">Proyecto activo</span>
+                <h3 id="project-detail-name">Proyecto general</h3>
+              </div>
+              <span class="project-detail-status" id="project-detail-status">Activo</span>
+            </div>
+            <p id="project-detail-description">Selecciona un proyecto para revisar su avance y editar su información.</p>
+
+            <div class="project-detail-kpis">
+              <div>
+                <span>Total</span>
+                <strong id="project-detail-total">0</strong>
+              </div>
+              <div>
+                <span>En proceso</span>
+                <strong id="project-detail-progress">0</strong>
+              </div>
+              <div>
+                <span>Completadas</span>
+                <strong id="project-detail-done">0</strong>
+              </div>
+              <div>
+                <span>Avance</span>
+                <strong id="project-detail-percent">0%</strong>
+              </div>
+            </div>
+
+            <form id="project-edit-form" class="project-edit-form">
+              <div class="project-form-grid">
+                <div>
+                  <label for="edit-project-name">Nombre</label>
+                  <input id="edit-project-name" name="name" type="text" required autocomplete="off">
+                </div>
+                <div>
+                  <label for="edit-project-status">Estado</label>
+                  <select id="edit-project-status" name="status">
+                    <option value="active">Activo</option>
+                    <option value="paused">Pausado</option>
+                  </select>
+                </div>
+              </div>
+              <label for="edit-project-description">Descripción</label>
+              <textarea id="edit-project-description" name="description"></textarea>
+              <div class="project-form-grid">
+                <div>
+                  <label for="edit-project-due-date">Fecha objetivo</label>
+                  <div class="date-input-wrap">
+                    <input id="edit-project-due-date" name="due_date" type="date" lang="es-MX" inputmode="none" min="<?php echo date('Y-m-d'); ?>">
+                    <button type="button" class="date-picker-button" aria-label="Abrir calendario" data-date-target="edit-project-due-date">
+                      <img src="../../assets/img/icono-calendario.png" alt="">
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label for="edit-project-color">Color</label>
+                  <input id="edit-project-color" name="color" type="color" value="#1B5CFF">
+                </div>
+              </div>
+              <div class="project-control-actions">
+                <button type="submit" class="crear">Guardar cambios</button>
+                <button type="button" class="project-archive-btn" id="project-archive-btn">Archivar</button>
+              </div>
+            </form>
+          </div>
+
+          <div id="projects-list" class="projects-grid">
+            <div class="project-empty">Cargando proyectos...</div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Sección de tableros -->
     <section id="tableros" class="seccion">
-      <h2 class="titulo-tableros">Mis tableros</h2>
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Flujo Kanban</span>
+          <h2 class="titulo-tableros">Mis tableros</h2>
+        </div>
+        <p id="board-summary">Cargando tareas del tablero...</p>
+      </div>
+      <div class="active-project-strip" id="active-project-strip">
+        <span>Proyecto activo</span>
+        <strong id="active-project-name">Proyecto general</strong>
+      </div>
       <div class="contenedor-tableros">
-        <div class="columna">
+        <div class="columna columna-pending">
           <div class="titulo-columna">
-            <h3>Pendiente</h3>
-            <button class="add-card" data-seccion="pendiente">+</button>
+            <div>
+              <h3>Pendiente <span class="column-count" data-count-column="pending">0</span></h3>
+            </div>
+            <button class="add-card" data-seccion="pendiente" aria-label="Crear tarjeta pendiente">+</button>
           </div>
           <div class="tarjetas"></div>
         </div>
-        <div class="columna">
+        <div class="columna columna-progress">
           <div class="titulo-columna">
-            <h3>En proceso</h3>
-            <button class="add-card" data-seccion="proceso">+</button>
+            <div>
+              <h3>En proceso <span class="column-count" data-count-column="in_progress">0</span></h3>
+            </div>
+            <button class="add-card" data-seccion="proceso" aria-label="Crear tarjeta en proceso">+</button>
           </div>
           <div class="tarjetas"></div>
         </div>
-        <div class="columna">
+        <div class="columna columna-done">
           <div class="titulo-columna">
-            <h3>Completado</h3>
-            <button class="add-card" data-seccion="completado">+</button>
+            <div>
+              <h3>Completado <span class="column-count" data-count-column="done">0</span></h3>
+            </div>
+            <button class="add-card" data-seccion="completado" aria-label="Crear tarjeta completada">+</button>
           </div>
           <div class="tarjetas"></div>
         </div>
@@ -83,10 +242,18 @@
           </select>
 
           <label for="fecha-tarjeta">Fecha límite:</label>
-          <input class="date" 
-                type="date" 
-                id="fecha-tarjeta" 
-                name="fecha-tarjeta">
+          <div class="date-input-wrap">
+            <input class="date"
+                  type="date"
+                  id="fecha-tarjeta"
+                  name="fecha-tarjeta"
+                  lang="es-MX"
+                  inputmode="none"
+                  min="<?php echo date('Y-m-d'); ?>">
+            <button type="button" class="date-picker-button" aria-label="Abrir calendario" data-date-target="fecha-tarjeta">
+              <img src="../../assets/img/icono-calendario.png" alt="">
+            </button>
+          </div>
 
           <div class="botones">
             <button type="button" class="cancelar">Cancelar</button>
@@ -136,7 +303,7 @@
               <th>Tarea</th>
               <th>Tablero</th>
               <th>Estado</th>
-              <th>Fecha</th>
+              <th>Fecha límite</th>
               <th><img src="../../assets/img/icono-usuario.png" class="icono-completado" alt="Completado"></th>
             </tr>
           </thead>
@@ -212,7 +379,12 @@
           <!-- FECHA -->
           <div class="fila">
             <label for="fecha">Fecha límite:</label>
-            <input type="date" id="fecha" name="fecha" style="color: white;">
+            <div class="date-input-wrap">
+              <input type="date" id="fecha" name="fecha" lang="es-MX" inputmode="none" min="<?php echo date('Y-m-d'); ?>">
+              <button type="button" class="date-picker-button" aria-label="Abrir calendario" data-date-target="fecha">
+                <img src="../../assets/img/icono-calendario.png" alt="">
+              </button>
+            </div>
           </div>
 
           <!-- BOTONES -->
@@ -226,90 +398,152 @@
 
     <!-- REPORTES -->
     <div id="reportes" class="seccion">
-      <h2 class="titulo-reportes">Reportes</h2>
-      <div class="descripcion-exportar">
-          <p class="descripcion-reportes">Ver métricas y estadísticas generales del sistema.</p>
-          <button id="btn-exportar-pdf" class="btn-exportar">Exportar PDF</button>
+      <div class="reports-hero">
+        <div>
+          <span class="section-kicker">Analítica operativa</span>
+          <h2 class="titulo-reportes">Reportes</h2>
+          <p class="descripcion-reportes">Mide avance, carga del equipo y riesgos próximos con una vista ejecutiva.</p>
+        </div>
+        <button id="btn-exportar-pdf" class="btn-exportar" type="button">Exportar PDF</button>
       </div>
 
-      <div class="tarjetas-metricas">
-        <div class="tarjeta-metrica" data-action="total_tareas">
-          <h3>Total de tareas</h3>
-          <p>0</p>
-        </div>
-        <div class="tarjeta-metrica" data-action="pendiente">
-          <h3>Pendiente</h3>
-          <p>0</p>
-        </div>
-        <div class="tarjeta-metrica" data-action="en_proceso">
-          <h3>En proceso</h3>
-          <p>0</p>
-        </div>
-        <div class="tarjeta-metrica" data-action="completado">
-          <h3>Completado</h3>
-          <p>0</p>
-        </div>
+      <div class="report-kpi-grid">
+        <article class="report-kpi-card" data-action="total_tareas">
+          <span>Total</span>
+          <strong id="report-total-tasks">0</strong>
+          <small>Tareas activas</small>
+        </article>
+        <article class="report-kpi-card accent-green" data-action="completado">
+          <span>Completadas</span>
+          <strong id="report-completed-tasks">0</strong>
+          <small id="report-productivity-label">0% productividad</small>
+        </article>
+        <article class="report-kpi-card accent-red" data-action="atrasadas">
+          <span>Atrasadas</span>
+          <strong id="report-overdue-tasks">0</strong>
+          <small>Requieren atención</small>
+        </article>
+        <article class="report-kpi-card accent-amber" data-action="proximas">
+          <span>Próximas</span>
+          <strong id="report-soon-tasks">0</strong>
+          <small>Vencen en 7 días</small>
+        </article>
+        <article class="report-kpi-card accent-blue" data-action="usuarios">
+          <span>Usuarios activos</span>
+          <strong id="report-active-users">0</strong>
+          <small>Con tareas asignadas</small>
+        </article>
       </div>
 
-      <div class="contenedor-barras">
-        <div class="recuadro">
-          <h3>Progreso por tablero</h3>
-          <div class="barra">
-            <span>Pendiente</span>
-            <div class="barra-contenido">
-              <div class="barra-progreso" style="width: 0%"></div>
+      <div class="reports-grid">
+        <article class="report-panel report-panel-donut">
+          <div class="report-panel-head">
+            <div>
+              <span class="section-kicker">Estado</span>
+              <h3>Distribución de tareas</h3>
             </div>
-            <span class="porcentaje">0%</span>
           </div>
-          <div class="barra">
-            <span>En proceso</span>
-            <div class="barra-contenido">
-              <div class="barra-progreso" style="width: 0%"></div>
-            </div>
-            <span class="porcentaje">0%</span>
+          <div class="chart-box">
+            <canvas id="report-status-chart" aria-label="Distribución por estado"></canvas>
+            <div id="report-status-fallback" class="report-chart-fallback"></div>
           </div>
-          <div class="barra">
-            <span>Completado</span>
-            <div class="barra-contenido">
-              <div class="barra-progreso" style="width: 0%"></div>
-            </div>
-            <span class="porcentaje">0%</span>
-          </div>
-        </div>
+          <div id="report-status-legend" class="report-legend"></div>
+        </article>
 
-        <div class="recuadro">
-          <h3>Usuarios activos</h3>
-          <div class="barra">
-            <span>Zahir Fernando</span>
-            <div class="barra-contenido">
-              <div class="barra-progreso" style="width: 0%"></div>
+        <article class="report-panel">
+          <div class="report-panel-head">
+            <div>
+              <span class="section-kicker">Equipo</span>
+              <h3>Tareas por usuario</h3>
             </div>
-            <span class="porcentaje">0%</span>
           </div>
-          <div class="barra">
-            <span>Reniery Lucero</span>
-            <div class="barra-contenido">
-              <div class="barra-progreso" style="width: 0%"></div>
-            </div>
-            <span class="porcentaje">0%</span>
+          <div class="chart-box chart-box-bars">
+            <canvas id="report-users-chart" aria-label="Tareas por usuario"></canvas>
           </div>
-          <div class="barra">
-            <span>Keyra Yariely</span>
-            <div class="barra-contenido">
-              <div class="barra-progreso" style="width: 0%"></div>
-            </div>
-            <span class="porcentaje">0%</span>
-          </div>
-        </div>
-      </div>
+          <div id="report-users-list" class="report-bars-list"></div>
+        </article>
 
-      <div class="recuadro tareas-atrasadas">
-        <h3>Tareas atrasadas</h3>
-        <div class="contenido-atrasadas">
-          <p>Cargando tareas atrasadas...</p>
-        </div>
+        <article class="report-panel report-panel-wide">
+          <div class="report-panel-head">
+            <div>
+              <span class="section-kicker">Ritmo</span>
+              <h3>Completadas por semana</h3>
+            </div>
+          </div>
+          <div class="chart-box chart-box-wide">
+            <canvas id="report-weekly-chart" aria-label="Tareas completadas por semana"></canvas>
+          </div>
+          <div id="report-weekly-list" class="report-bars-list"></div>
+        </article>
+
+        <article class="report-panel report-panel-wide">
+          <div class="report-panel-head">
+            <div>
+              <span class="section-kicker">Carga</span>
+              <h3>Prioridad por vencimiento</h3>
+            </div>
+          </div>
+          <div id="report-priority-heatmap" class="report-heatmap"></div>
+        </article>
+
+        <article class="report-panel report-panel-wide report-alerts-panel">
+          <div class="report-panel-head">
+            <div>
+              <span class="section-kicker">Riesgos</span>
+              <h3>Alertas de tareas</h3>
+            </div>
+          </div>
+          <div id="report-alerts-table" class="report-alerts-table"></div>
+        </article>
       </div>
     </div>
+
+    <!-- CHAT -->
+    <section id="chat" class="seccion">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Colaboración</span>
+          <h2 class="titulo-seccion">Chat</h2>
+        </div>
+        <span id="chat-status" class="chat-status">Cargando...</span>
+      </div>
+
+      <div class="chat-layout">
+        <aside class="chat-sidebar-panel">
+          <div class="chat-direct-form">
+            <select id="chat-user-select" aria-label="Usuario para chat privado">
+              <option value="">Chat privado con...</option>
+            </select>
+            <button type="button" id="chat-start-direct">Abrir</button>
+          </div>
+
+          <div id="chat-conversations-list" class="chat-conversations-list">
+            <div class="chat-empty-list">Cargando conversaciones...</div>
+          </div>
+        </aside>
+
+        <div class="chat-panel">
+          <header class="chat-panel-header">
+            <div>
+              <h3 id="chat-active-title">Chat</h3>
+              <p id="chat-active-meta">Selecciona una conversación</p>
+            </div>
+            <button type="button" id="chat-delete-active" class="chat-delete-active" hidden>Eliminar chat</button>
+          </header>
+
+          <div id="chat-empty-state" class="chat-empty-state">
+            <strong>Sin conversación activa</strong>
+          </div>
+
+          <div id="chat-messages" class="chat-messages"></div>
+
+          <form id="chat-form" class="chat-form" style="display: none;">
+            <textarea id="chat-message-input" rows="2" maxlength="4000" placeholder="Escribe un mensaje..." required></textarea>
+            <button id="chat-send" type="submit">Enviar</button>
+          </form>
+        </div>
+      </div>
+    </section>
 
     <!-- SECCIÓN USUARIOS -->
     <section id="usuarios" class="seccion">
@@ -589,10 +823,10 @@
             <input type="password" id="currentPassword" class="input-edicion" placeholder="Ingresa tu contraseña actual" required>
             
             <label class="label-edicion">Nueva contraseña</label>
-            <input type="password" id="newPassword" class="input-edicion" placeholder="Escribe tu nueva contraseña..." required>
+            <input type="password" id="newPassword" class="input-edicion" placeholder="Escribe tu nueva contraseña..." required minlength="8">
             
             <label class="label-edicion">Confirmar contraseña</label>
-            <input type="password" id="confirmPassword" class="input-edicion" placeholder="Confirma tu nueva contraseña..." required>
+            <input type="password" id="confirmPassword" class="input-edicion" placeholder="Confirma tu nueva contraseña..." required minlength="8">
             
             <p class="confirmacion-edicion">¿Confirmas los cambios realizados?</p>
             
@@ -796,12 +1030,15 @@
       window.API_BASE = apiBase;
   </script>
 
-  <script src="../../assets/javascript/menu.js" defer></script>
+  <script src="../../assets/javascript/menu.js?v=20260520-1" defer></script>
   <script src="../../assets/javascript/admin.js" defer></script>
-  <script src="../../assets/javascript/users.js" defer></script>
-  <script src="../../assets/javascript/tasks.js" defer></script>
-  <script src="../../assets/javascript/boards.js" defer></script>
-  <script src="../../assets/javascript/reports.js" defer></script>
-  <script src="../../assets/javascript/profile.js" defer></script>
+  <script src="../../assets/javascript/users.js?v=20260516-3" defer></script>
+  <script src="../../assets/javascript/projects.js?v=20260520-1" defer></script>
+  <script src="../../assets/javascript/tasks.js?v=20260520-1" defer></script>
+  <script src="../../assets/javascript/boards.js?v=20260520-1" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
+  <script src="../../assets/javascript/reports.js?v=20260520-1" defer></script>
+  <script src="../../assets/javascript/chat.js" defer></script>
+  <script src="../../assets/javascript/profile.js?v=20260516-3" defer></script>
 </body>
 </html>

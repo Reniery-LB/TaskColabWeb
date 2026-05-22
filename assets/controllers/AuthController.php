@@ -13,7 +13,7 @@ class AuthController {
 
         if (empty($name)) $errors[] = "El nombre es obligatorio.";
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Correo inválido.";
-        if (strlen($password) < 6) $errors[] = "La contraseña debe tener al menos 6 caracteres.";
+        if (strlen($password) < 8) $errors[] = "La contraseña debe tener al menos 8 caracteres.";
         if ($password !== $confirm) $errors[] = "Las contraseñas no coinciden.";
 
         if (!empty($errors)) return ['ok' => false, 'errors' => $errors];

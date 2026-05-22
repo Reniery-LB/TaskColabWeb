@@ -6,20 +6,37 @@ class TaskModel {
     private $table = 'tasks';
     private $assignmentsTable = 'task_assignments';
 
-    // Mapeo de valores de frontend a base de datos
-    private $statusMap = [
+    private $statusToDbMap = [
         'Pendiente' => 'pending',
-        'En proceso' => 'in_progress', 
+        'En Proceso' => 'in_progress',
+        'En proceso' => 'in_progress',
         'Completado' => 'done',
+        'Completada' => 'done',
+        'completed' => 'done',
+        'pending' => 'pending',
+        'in_progress' => 'in_progress',
+        'done' => 'done'
+    ];
+
+    private $statusToFrontendMap = [
         'pending' => 'Pendiente',
-        'in_progress' => 'En proceso', 
+        'in_progress' => 'En proceso',
         'done' => 'Completado'
     ];
 
-    private $priorityMap = [
+    private $priorityToDbMap = [
         'Alta' => 'high',
-        'Media' => 'medium', 
+        'Alta prioridad' => 'high',
+        'Media' => 'medium',
+        'Media prioridad' => 'medium',
         'Baja' => 'low',
+        'Baja prioridad' => 'low',
+        'high' => 'high',
+        'medium' => 'medium',
+        'low' => 'low'
+    ];
+
+    private $priorityToFrontendMap = [
         'high' => 'Alta',
         'medium' => 'Media',
         'low' => 'Baja'
@@ -42,22 +59,22 @@ class TaskModel {
 
     // Convertir status de DB a frontend
     private function statusToFrontend($dbStatus) {
-        return $this->statusMap[$dbStatus] ?? $dbStatus;
+        return $this->statusToFrontendMap[$dbStatus] ?? $dbStatus;
     }
 
     // Convertir status de frontend a DB
     private function statusToDB($frontendStatus) {
-        return $this->statusMap[$frontendStatus] ?? 'pending';
+        return $this->statusToDbMap[$frontendStatus] ?? 'pending';
     }
 
     // Convertir prioridad de DB a frontend
     private function priorityToFrontend($dbPriority) {
-        return $this->priorityMap[$dbPriority] ?? $dbPriority;
+        return $this->priorityToFrontendMap[$dbPriority] ?? $dbPriority;
     }
 
     // Convertir prioridad de frontend a DB
     private function priorityToDB($frontendPriority) {
-        return $this->priorityMap[$frontendPriority] ?? 'medium';
+        return $this->priorityToDbMap[$frontendPriority] ?? 'medium';
     }
 
     // Obtener todas las tareas del usuario actual
@@ -98,7 +115,7 @@ class TaskModel {
                 
                 error_log("ADMIN: Usuario $userId puede ver TODAS las tareas");
             } else {
-                // SI NO ES ADMIN: Ver solo sus tareas
+                // SI NO ES ADMIN: Ver solo las tareas/tarjetas asignadas al usuario
                 $query = "SELECT DISTINCT
                             t.id,
                             t.title,
@@ -118,18 +135,12 @@ class TaskModel {
                         LEFT JOIN {$this->assignmentsTable} ta ON t.id = ta.task_id
                         LEFT JOIN users u ON ta.user_id = u.id
                         WHERE t.is_active = 1
-                        AND (
-                            t.created_by = :user_id1
-                            OR ta.user_id = :user_id2
-                            OR b.owner_id = :user_id3
-                        )
+                        AND ta.user_id = :user_id
                         GROUP BY t.id
                         ORDER BY t.created_at DESC";
                 
                 $stmt = $this->conn->prepare($query);
-                $stmt->bindParam(':user_id1', $userId, PDO::PARAM_INT);
-                $stmt->bindParam(':user_id2', $userId, PDO::PARAM_INT);
-                $stmt->bindParam(':user_id3', $userId, PDO::PARAM_INT);
+                $stmt->bindParam(':user_id', $userId, PDO::PARAM_INT);
                 $stmt->execute();
                 
                 error_log("USUARIO NORMAL: Usuario $userId ve solo sus tareas");
@@ -172,13 +183,14 @@ class TaskModel {
                         LEFT JOIN users u ON ta.user_id = u.id
                         WHERE t.id = :task_id 
                         AND t.is_active = 1
-                        AND (t.created_by = :user_id OR ta.user_id = :user_id)
+                        AND (t.created_by = :created_by_user_id OR ta.user_id = :assigned_user_id)
                         GROUP BY t.id";
                 
                 $stmt = $this->conn->prepare($sql);
                 $stmt->execute([
                     ':task_id' => $taskId,
-                    ':user_id' => $userId
+                    ':created_by_user_id' => $userId,
+                    ':assigned_user_id' => $userId
                 ]);
             } else {
                 // Si NO se proporciona userId, obtener sin verificar permisos
@@ -239,8 +251,15 @@ class TaskModel {
                 $dbPriority = 'medium';
             }
             
-            $sql = "INSERT INTO tasks (title, description, board_id, status, priority, due_date, created_by, created_at, updated_at) 
-                    VALUES (:title, :description, :board_id, :status, :priority, :due_date, :created_by, NOW(), NOW())";
+            $columnCreated = $this->statusToDB($taskData['column_created'] ?? $dbStatus);
+
+            $sql = "INSERT INTO tasks (
+                        title, description, board_id, status, priority, due_date,
+                        created_by, column_created, created_at, updated_at
+                    ) VALUES (
+                        :title, :description, :board_id, :status, :priority, :due_date,
+                        :created_by, :column_created, NOW(), NOW()
+                    )";
             
             $stmt = $this->conn->prepare($sql);
             $result = $stmt->execute([
@@ -250,7 +269,8 @@ class TaskModel {
                 ':status' => $dbStatus,
                 ':priority' => $dbPriority,
                 ':due_date' => $taskData['due_date'],
-                ':created_by' => $taskData['created_by']
+                ':created_by' => $taskData['created_by'],
+                ':column_created' => $columnCreated
             ]);
             
             if (!$result) {
@@ -263,7 +283,16 @@ class TaskModel {
             error_log("Tarea creada ID: $taskId, status: '$dbStatus', priority: '$dbPriority'");
             
             if (!empty($taskData['assigned_to'])) {
-                $this->assignTaskToUser($taskId, $taskData['assigned_to']);
+                $assignedUsers = is_array($taskData['assigned_to'])
+                    ? $taskData['assigned_to']
+                    : [$taskData['assigned_to']];
+
+                foreach (array_unique($assignedUsers) as $assignedUserId) {
+                    $assignedUserId = (int)$assignedUserId;
+                    if ($assignedUserId > 0) {
+                        $this->assignTaskToUser($taskId, $assignedUserId);
+                    }
+                }
             }
             
             return $taskId;
@@ -298,11 +327,24 @@ class TaskModel {
             
             // Si se proporciona userId, verificar permisos
             if ($userId) {
-                $checkSql = "SELECT id FROM tasks WHERE id = :task_id AND (created_by = :user_id OR id IN (SELECT task_id FROM task_assignments WHERE user_id = :user_id))";
+                $checkSql = "
+                    SELECT id
+                    FROM tasks
+                    WHERE id = :task_id
+                      AND (
+                        created_by = :created_by_user_id
+                        OR id IN (
+                            SELECT task_id
+                            FROM task_assignments
+                            WHERE user_id = :assigned_user_id
+                        )
+                      )
+                ";
                 $checkStmt = $this->conn->prepare($checkSql);
                 $checkStmt->execute([
                     ':task_id' => $taskId,
-                    ':user_id' => $userId
+                    ':created_by_user_id' => $userId,
+                    ':assigned_user_id' => $userId
                 ]);
                 
                 if (!$checkStmt->fetch()) {
@@ -357,14 +399,22 @@ class TaskModel {
                 $deleteStmt = $this->conn->prepare($deleteSql);
                 $deleteStmt->execute([':task_id' => $taskId]);
                 
-                // Crear nueva asignación
+                // Crear nuevas asignaciones
                 if ($updateData['assigned_to']) {
                     $assignSql = "INSERT INTO task_assignments (task_id, user_id, assigned_at) VALUES (:task_id, :user_id, NOW())";
                     $assignStmt = $this->conn->prepare($assignSql);
-                    $assignStmt->execute([
-                        ':task_id' => $taskId,
-                        ':user_id' => $updateData['assigned_to']
-                    ]);
+                    $assignedUsers = is_array($updateData['assigned_to'])
+                        ? $updateData['assigned_to']
+                        : [$updateData['assigned_to']];
+
+                    foreach (array_unique($assignedUsers) as $assignedUserId) {
+                        $assignedUserId = (int)$assignedUserId;
+                        if ($assignedUserId <= 0) continue;
+                        $assignStmt->execute([
+                            ':task_id' => $taskId,
+                            ':user_id' => $assignedUserId
+                        ]);
+                    }
                 }
             }
             
@@ -462,18 +512,23 @@ class TaskModel {
         try {
             $sql = "SELECT 
                     COUNT(DISTINCT t.id) as total_tasks,
-                    COUNT(DISTINCT CASE WHEN t.created_by = :user_id THEN t.id END) as created_tasks,
-                    COUNT(DISTINCT CASE WHEN ta.user_id = :user_id THEN t.id END) as assigned_tasks,
+                    COUNT(DISTINCT CASE WHEN t.created_by = :created_count_user_id THEN t.id END) as created_tasks,
+                    COUNT(DISTINCT CASE WHEN ta.user_id = :assigned_count_user_id THEN t.id END) as assigned_tasks,
                     COUNT(DISTINCT CASE WHEN t.status = 'pending' THEN t.id END) as pending_tasks,
                     COUNT(DISTINCT CASE WHEN t.status = 'in_progress' THEN t.id END) as in_progress_tasks,
                     COUNT(DISTINCT CASE WHEN t.status = 'done' THEN t.id END) as done_tasks
                 FROM tasks t
                 LEFT JOIN task_assignments ta ON t.id = ta.task_id
                 WHERE t.is_active = 1
-                AND (t.created_by = :user_id OR ta.user_id = :user_id)";
+                AND (t.created_by = :created_filter_user_id OR ta.user_id = :assigned_filter_user_id)";
             
             $stmt = $this->conn->prepare($sql);
-            $stmt->execute([':user_id' => $userId]);
+            $stmt->execute([
+                ':created_count_user_id' => $userId,
+                ':assigned_count_user_id' => $userId,
+                ':created_filter_user_id' => $userId,
+                ':assigned_filter_user_id' => $userId
+            ]);
             
             $stats = $stmt->fetch(PDO::FETCH_ASSOC);
             error_log("getUserTaskStats: {$stats['total_tasks']} tareas para usuario $userId");

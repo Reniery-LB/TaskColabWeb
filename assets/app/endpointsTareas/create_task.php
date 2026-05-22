@@ -1,6 +1,8 @@
 <?php
 // assets/app/endpointsTareas/create_task.php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 header('Content-Type: application/json');
 
 // Verificar sesión
@@ -14,6 +16,7 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
 }
 
 require_once __DIR__ . '/../../models/TaskModel.php';
+require_once __DIR__ . '/../../models/ProjectModel.php';
 
 try {
     $input = json_decode(file_get_contents('php://input'), true);
@@ -27,13 +30,25 @@ try {
         throw new Exception("El título es obligatorio");
     }
     
-    // Validar assigned_to (puede ser null o vacío)
-    $assigned_to = null;
-    if (isset($input['assigned_to']) && !empty($input['assigned_to'])) {
-        $assigned_to = (int)$input['assigned_to'];
-        if ($assigned_to <= 0) {
-            $assigned_to = null;
+    $userId = (int)$_SESSION['user']['id'];
+    $isAdmin = !empty($_SESSION['user']['is_admin']);
+
+    // Validar assigned_to. Admin puede asignar a varios; usuario normal solo a sí mismo.
+    $assigned_to = [];
+    if ($isAdmin) {
+        $rawAssigned = $input['assigned_to'] ?? [];
+        if (!is_array($rawAssigned)) {
+            $rawAssigned = $rawAssigned ? [$rawAssigned] : [];
         }
+        foreach ($rawAssigned as $assignedId) {
+            $assignedId = (int)$assignedId;
+            if ($assignedId > 0) {
+                $assigned_to[] = $assignedId;
+            }
+        }
+        $assigned_to = array_values(array_unique($assigned_to));
+    } else {
+        $assigned_to = [$userId];
     }
     
     // Validar due_date (puede ser null o vacío)
@@ -43,22 +58,39 @@ try {
         // Verificar formato de fecha
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $due_date)) {
             $due_date = null;
+        } elseif ($due_date < date('Y-m-d')) {
+            throw new Exception('La fecha límite no puede ser anterior al día de hoy');
         }
     }
     
     $taskModel = new TaskModel();
-    $userId = $_SESSION['user']['id'];
+    $projectModel = new ProjectModel();
+    $defaultProject = $projectModel->getOrCreateDefaultProject((int)$userId);
+    $boardId = isset($input['board_id']) ? (int)$input['board_id'] : (int)($defaultProject['board_id'] ?? 1);
+
+    if ($boardId <= 0) {
+        $boardId = (int)($defaultProject['board_id'] ?? 1);
+    }
+
+    if (!$projectModel->userCanAccessBoard((int)$userId, $boardId)) {
+        http_response_code(403);
+        echo json_encode([
+            'ok' => false,
+            'message' => 'No tienes acceso a este tablero'
+        ]);
+        exit;
+    }
     
     error_log("Datos recibidos en create_task: " . print_r($input, true));
     
     $taskData = [
         'title' => trim($input['title']),
         'description' => isset($input['description']) ? trim($input['description']) : '',
-        'assigned_to' => $assigned_to, // Puede ser null
+        'assigned_to' => $assigned_to,
         'status' => isset($input['status']) ? $input['status'] : 'Pendiente',
         'priority' => isset($input['priority']) ? $input['priority'] : 'Media',
         'due_date' => $due_date, // Puede ser null
-        'board_id' => isset($input['board_id']) ? (int)$input['board_id'] : 1,
+        'board_id' => $boardId,
         'created_by' => $userId
     ];
     
