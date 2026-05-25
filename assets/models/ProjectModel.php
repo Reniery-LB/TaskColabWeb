@@ -108,9 +108,18 @@ class ProjectModel {
     public function listProjects($userId) {
         $this->getOrCreateDefaultProject($userId);
 
+        return $this->listProjectsByStatus($userId, false);
+    }
+
+    public function listArchivedProjects($userId) {
+        return $this->listProjectsByStatus($userId, true);
+    }
+
+    private function listProjectsByStatus($userId, $archivedOnly = false) {
         $adminStmt = $this->conn->prepare("SELECT is_admin FROM users WHERE id = ? AND is_active = 1");
         $adminStmt->execute([$userId]);
         $isAdmin = (int)$adminStmt->fetchColumn() === 1;
+        $statusFilter = $archivedOnly ? "p.status = 'archived'" : "p.status <> 'archived'";
 
         if ($isAdmin) {
             $stmt = $this->conn->prepare("
@@ -134,7 +143,7 @@ class ProjectModel {
                 LEFT JOIN boards b ON b.project_id = p.id
                 LEFT JOIN tasks t ON t.board_id = b.id AND t.is_active = 1
                 LEFT JOIN project_members pm_all ON pm_all.project_id = p.id
-                WHERE p.status <> 'archived'
+                WHERE {$statusFilter}
                 GROUP BY p.id, p.name, p.description, p.owner_id, p.status, p.color, p.due_date, p.created_at, p.updated_at, b.id
                 ORDER BY p.updated_at DESC, p.created_at DESC
             ");
@@ -171,7 +180,7 @@ class ProjectModel {
                       AND ta_visible.user_id = :task_user_id
                 )
             LEFT JOIN project_members pm_all ON pm_all.project_id = p.id
-            WHERE p.status <> 'archived'
+            WHERE {$statusFilter}
               AND (
                 pm.user_id IS NOT NULL
                 OR EXISTS (
@@ -446,6 +455,51 @@ class ProjectModel {
         $stmt->execute([':project_id' => $projectId]);
 
         return $stmt->rowCount() > 0;
+    }
+
+    public function restoreProject($projectId, $userId) {
+        if (!$this->userCanManageArchivedProject($projectId, $userId)) {
+            throw new Exception('No tienes permisos para desarchivar este proyecto');
+        }
+
+        $stmt = $this->conn->prepare("
+            UPDATE projects
+            SET status = 'active', updated_at = NOW()
+            WHERE id = :project_id
+              AND status = 'archived'
+        ");
+        $stmt->execute([':project_id' => $projectId]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    private function userCanManageArchivedProject($projectId, $userId) {
+        $stmt = $this->conn->prepare("
+            SELECT COUNT(*)
+            FROM projects p
+            LEFT JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = :member_user_id
+            WHERE p.id = :project_id
+              AND p.status = 'archived'
+              AND (
+                p.owner_id = :owner_user_id
+                OR pm.role_in_project IN ('owner', 'admin')
+                OR EXISTS (
+                    SELECT 1
+                    FROM users admin_user
+                    WHERE admin_user.id = :admin_user_id
+                      AND admin_user.is_admin = 1
+                      AND admin_user.is_active = 1
+                )
+              )
+        ");
+        $stmt->execute([
+            ':project_id' => $projectId,
+            ':member_user_id' => $userId,
+            ':owner_user_id' => $userId,
+            ':admin_user_id' => $userId
+        ]);
+
+        return (int)$stmt->fetchColumn() > 0;
     }
 
     public function userCanAccessBoard($userId, $boardId) {
