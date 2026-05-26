@@ -350,7 +350,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <span>${Number(project.members_count || 1)} miembros</span>
             <span>${project.due_date ? formatDate(project.due_date) : 'Sin fecha'}</span>
           </div>
-          <button type="button" class="project-restore-btn" data-project-id="${project.id}">Desarchivar</button>
+          <div class="archived-project-actions">
+            <button type="button" class="project-restore-btn" data-project-id="${project.id}">Desarchivar</button>
+            <button type="button" class="project-delete-permanent-btn" data-project-id="${project.id}">Eliminar</button>
+          </div>
         </article>
       `;
     }).join('');
@@ -361,6 +364,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const projectId = Number(button.dataset.projectId);
         const project = archivedProjects.find(item => Number(item.id) === projectId);
         if (project) restoreArchivedProject(project);
+      });
+    });
+
+    archivedList.querySelectorAll('.project-delete-permanent-btn').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const projectId = Number(button.dataset.projectId);
+        const project = archivedProjects.find(item => Number(item.id) === projectId);
+        if (project) deleteArchivedProject(project);
       });
     });
   }
@@ -401,6 +413,48 @@ document.addEventListener('DOMContentLoaded', () => {
       );
     } else if (confirm(`¿Desarchivar "${project.name}"?`)) {
       restore();
+    }
+  }
+
+  function deleteArchivedProject(project) {
+    const remove = async () => {
+      try {
+        const response = await fetch(`${apiBase}/delete_archived_project.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project_id: Number(project.id) })
+        });
+        const json = await response.json();
+
+        if (!response.ok || !json.ok) {
+          throw new Error(json.message || 'No se pudo eliminar el proyecto');
+        }
+
+        if (Number(localStorage.getItem('taskcolab_active_project_id')) === Number(project.id)) {
+          localStorage.removeItem('taskcolab_active_project_id');
+        }
+
+        await loadArchivedProjects(false);
+        await loadProjects();
+        showProjectSuccess('Proyecto eliminado permanentemente.');
+      } catch (error) {
+        console.error('Error eliminando proyecto archivado:', error);
+        showProjectError(error.message || 'Error al eliminar el proyecto.');
+      }
+    };
+
+    if (typeof window.configurarAlerta === 'function') {
+      window.configurarAlerta(
+        'Eliminar proyecto',
+        `¿Eliminar permanentemente "${escapeHtml(project.name)}"?<br>Se borrarán sus tareas, tarjetas, chats y relaciones. Esta acción no se puede deshacer.`,
+        'alerta',
+        {
+          textoConfirmar: 'Eliminar',
+          onConfirmar: remove
+        }
+      );
+    } else if (confirm(`¿Eliminar permanentemente "${project.name}"? Esta acción no se puede deshacer.`)) {
+      remove();
     }
   }
 

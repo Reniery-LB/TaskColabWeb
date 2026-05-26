@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestor de Tareas</title>
-  <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260520-1">
+  <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260525-1">
 </head>
 <body>
   <!-- CONTENIDO PRINCIPAL -->
@@ -1060,7 +1060,7 @@
   <script src="../../assets/javascript/menu.js?v=20260520-1" defer></script>
   <script src="../../assets/javascript/admin.js" defer></script>
   <script src="../../assets/javascript/users.js?v=20260516-3" defer></script>
-  <script src="../../assets/javascript/projects.js?v=20260520-1" defer></script>
+  <script src="../../assets/javascript/projects.js?v=20260525-1" defer></script>
   <script src="../../assets/javascript/tasks.js?v=20260520-1" defer></script>
   <script src="../../assets/javascript/boards.js?v=20260520-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
