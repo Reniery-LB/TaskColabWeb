@@ -78,6 +78,17 @@ class ProjectModel {
         return (int)$stmt->fetchColumn() > 0;
     }
 
+    private function tableExists($table) {
+        $stmt = $this->conn->prepare("
+            SELECT COUNT(*)
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_SCHEMA = DATABASE()
+              AND TABLE_NAME = ?
+        ");
+        $stmt->execute([$table]);
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
     public function getOrCreateDefaultProject($userId) {
         $stmt = $this->conn->prepare("
             SELECT p.id, p.name, p.description, p.owner_id, p.status, p.color, p.due_date, b.id AS board_id
@@ -108,9 +119,18 @@ class ProjectModel {
     public function listProjects($userId) {
         $this->getOrCreateDefaultProject($userId);
 
+        return $this->listProjectsByStatus($userId, false);
+    }
+
+    public function listArchivedProjects($userId) {
+        return $this->listProjectsByStatus($userId, true);
+    }
+
+    private function listProjectsByStatus($userId, $archivedOnly = false) {
         $adminStmt = $this->conn->prepare("SELECT is_admin FROM users WHERE id = ? AND is_active = 1");
         $adminStmt->execute([$userId]);
         $isAdmin = (int)$adminStmt->fetchColumn() === 1;
+        $statusFilter = $archivedOnly ? "p.status = 'archived'" : "p.status <> 'archived'";
 
         if ($isAdmin) {
             $stmt = $this->conn->prepare("
@@ -134,7 +154,7 @@ class ProjectModel {
                 LEFT JOIN boards b ON b.project_id = p.id
                 LEFT JOIN tasks t ON t.board_id = b.id AND t.is_active = 1
                 LEFT JOIN project_members pm_all ON pm_all.project_id = p.id
-                WHERE p.status <> 'archived'
+                WHERE {$statusFilter}
                 GROUP BY p.id, p.name, p.description, p.owner_id, p.status, p.color, p.due_date, p.created_at, p.updated_at, b.id
                 ORDER BY p.updated_at DESC, p.created_at DESC
             ");
@@ -171,7 +191,7 @@ class ProjectModel {
                       AND ta_visible.user_id = :task_user_id
                 )
             LEFT JOIN project_members pm_all ON pm_all.project_id = p.id
-            WHERE p.status <> 'archived'
+            WHERE {$statusFilter}
               AND (
                 pm.user_id IS NOT NULL
                 OR EXISTS (
@@ -446,6 +466,211 @@ class ProjectModel {
         $stmt->execute([':project_id' => $projectId]);
 
         return $stmt->rowCount() > 0;
+    }
+
+    public function restoreProject($projectId, $userId) {
+        if (!$this->userCanManageArchivedProject($projectId, $userId)) {
+            throw new Exception('No tienes permisos para desarchivar este proyecto');
+        }
+
+        $stmt = $this->conn->prepare("
+            UPDATE projects
+            SET status = 'active', updated_at = NOW()
+            WHERE id = :project_id
+              AND status = 'archived'
+        ");
+        $stmt->execute([':project_id' => $projectId]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    public function deleteArchivedProject($projectId, $userId) {
+        if (!$this->userCanManageArchivedProject($projectId, $userId)) {
+            throw new Exception('No tienes permisos para eliminar este proyecto archivado');
+        }
+
+        $this->conn->beginTransaction();
+
+        try {
+            $boardIds = $this->fetchColumnList("
+                SELECT id
+                FROM boards
+                WHERE project_id = ?
+            ", [$projectId], 'boards');
+
+            $taskIds = [];
+            if (!empty($boardIds) && $this->tableExists('tasks')) {
+                $taskIds = $this->fetchColumnListByIds(
+                    'tasks',
+                    'id',
+                    'board_id',
+                    $boardIds
+                );
+            }
+
+            $conversationIds = $this->projectConversationIds($projectId, $taskIds);
+            $messageIds = [];
+            if (!empty($conversationIds) && $this->tableExists('messages')) {
+                $messageIds = $this->fetchColumnListByIds(
+                    'messages',
+                    'id',
+                    'conversation_id',
+                    $conversationIds
+                );
+            }
+
+            if (!empty($messageIds)) {
+                $this->deleteByIds('message_attachments', 'message_id', $messageIds);
+                $this->deleteByIds('message_reads', 'message_id', $messageIds);
+            }
+
+            if (!empty($conversationIds)) {
+                $this->deleteByIds('messages', 'conversation_id', $conversationIds);
+                $this->deleteByIds('conversation_members', 'conversation_id', $conversationIds);
+                $this->deleteByIds('conversations', 'id', $conversationIds);
+            }
+
+            if (!empty($taskIds)) {
+                $this->deleteActivityLogs('task', $taskIds);
+                $this->deleteByIds('task_tags', 'task_id', $taskIds);
+                $this->deleteByIds('attachments', 'task_id', $taskIds);
+                $this->deleteByIds('comments', 'task_id', $taskIds);
+                $this->deleteByIds('task_assignments', 'task_id', $taskIds);
+                $this->deleteByIds('tasks', 'id', $taskIds);
+            }
+
+            if (!empty($boardIds)) {
+                $this->deleteByIds('sync_events', 'board_id', $boardIds);
+                $this->deleteByIds('board_members', 'board_id', $boardIds);
+                $this->deleteByIds('boards', 'id', $boardIds);
+            }
+
+            $this->deleteActivityLogs('project', [$projectId]);
+            $this->deleteByIds('project_members', 'project_id', [$projectId]);
+            $this->deleteByIds('projects', 'id', [$projectId]);
+
+            $this->conn->commit();
+
+            return [
+                'project_id' => (int)$projectId,
+                'boards_deleted' => count($boardIds),
+                'tasks_deleted' => count($taskIds),
+                'conversations_deleted' => count($conversationIds),
+                'messages_deleted' => count($messageIds)
+            ];
+        } catch (Throwable $e) {
+            $this->conn->rollBack();
+            throw $e;
+        }
+    }
+
+    private function userCanManageArchivedProject($projectId, $userId) {
+        $stmt = $this->conn->prepare("
+            SELECT COUNT(*)
+            FROM projects p
+            LEFT JOIN project_members pm ON pm.project_id = p.id AND pm.user_id = :member_user_id
+            WHERE p.id = :project_id
+              AND p.status = 'archived'
+              AND (
+                p.owner_id = :owner_user_id
+                OR pm.role_in_project IN ('owner', 'admin')
+                OR EXISTS (
+                    SELECT 1
+                    FROM users admin_user
+                    WHERE admin_user.id = :admin_user_id
+                      AND admin_user.is_admin = 1
+                      AND admin_user.is_active = 1
+                )
+              )
+        ");
+        $stmt->execute([
+            ':project_id' => $projectId,
+            ':member_user_id' => $userId,
+            ':owner_user_id' => $userId,
+            ':admin_user_id' => $userId
+        ]);
+
+        return (int)$stmt->fetchColumn() > 0;
+    }
+
+    private function projectConversationIds($projectId, array $taskIds) {
+        if (!$this->tableExists('conversations')) {
+            return [];
+        }
+
+        $conversationIds = $this->fetchColumnList("
+            SELECT id
+            FROM conversations
+            WHERE project_id = ?
+        ", [$projectId], 'conversations');
+
+        if (!empty($taskIds)) {
+            $taskConversationIds = $this->fetchColumnListByIds(
+                'conversations',
+                'id',
+                'task_id',
+                $taskIds
+            );
+            $conversationIds = array_merge($conversationIds, $taskConversationIds);
+        }
+
+        return array_values(array_unique(array_map('intval', $conversationIds)));
+    }
+
+    private function fetchColumnList($sql, array $params, $requiredTable = null) {
+        if ($requiredTable && !$this->tableExists($requiredTable)) {
+            return [];
+        }
+
+        $stmt = $this->conn->prepare($sql);
+        $stmt->execute($params);
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    private function fetchColumnListByIds($table, $selectColumn, $whereColumn, array $ids) {
+        if (empty($ids) || !$this->tableExists($table)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->conn->prepare("
+            SELECT {$selectColumn}
+            FROM {$table}
+            WHERE {$whereColumn} IN ({$placeholders})
+        ");
+        $stmt->execute(array_values($ids));
+        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    private function deleteByIds($table, $column, array $ids) {
+        if (empty($ids) || !$this->tableExists($table)) {
+            return 0;
+        }
+
+        $ids = array_values(array_unique(array_map('intval', $ids)));
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->conn->prepare("
+            DELETE FROM {$table}
+            WHERE {$column} IN ({$placeholders})
+        ");
+        $stmt->execute($ids);
+        return $stmt->rowCount();
+    }
+
+    private function deleteActivityLogs($entityType, array $entityIds) {
+        if (empty($entityIds) || !$this->tableExists('activity_logs')) {
+            return 0;
+        }
+
+        $entityIds = array_values(array_unique(array_map('intval', $entityIds)));
+        $placeholders = implode(',', array_fill(0, count($entityIds), '?'));
+        $stmt = $this->conn->prepare("
+            DELETE FROM activity_logs
+            WHERE entity_type = ?
+              AND entity_id IN ({$placeholders})
+        ");
+        $stmt->execute(array_merge([$entityType], $entityIds));
+        return $stmt->rowCount();
     }
 
     public function userCanAccessBoard($userId, $boardId) {

@@ -8,6 +8,21 @@ api_require_method(['GET']);
 $user = api_current_user();
 $userId = (int)$user['id'];
 $isAdmin = !empty($user['is_admin']) ? 1 : 0;
+$projectId = isset($_GET['project_id']) ? (int)$_GET['project_id'] : null;
+
+$where = [
+    "(
+        ? = 1
+        OR b.owner_id = ?
+        OR EXISTS (SELECT 1 FROM board_members bm WHERE bm.board_id = b.id AND bm.user_id = ?)
+    )"
+];
+$params = [$isAdmin, $userId, $userId];
+
+if ($projectId !== null && $projectId > 0) {
+    $where[] = 'b.project_id = ?';
+    $params[] = $projectId;
+}
 
 $sql = "
     SELECT
@@ -29,16 +44,13 @@ $sql = "
     LEFT JOIN users owner ON owner.id = b.owner_id
     LEFT JOIN tasks t ON t.board_id = b.id
     LEFT JOIN board_members bm_all ON bm_all.board_id = b.id
-    WHERE
-        ? = 1
-        OR b.owner_id = ?
-        OR EXISTS (SELECT 1 FROM board_members bm WHERE bm.board_id = b.id AND bm.user_id = ?)
+    WHERE " . implode(' AND ', $where) . "
     GROUP BY b.id, owner.name
     ORDER BY b.updated_at DESC, b.created_at DESC
 ";
 
 $stmt = api_db()->prepare($sql);
-$stmt->execute([$isAdmin, $userId, $userId]);
+$stmt->execute($params);
 $boards = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $result = array_map(static function (array $board): array {

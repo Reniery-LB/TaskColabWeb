@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestor de Tareas</title>
-  <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260520-1">
+  <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260525-1">
 </head>
 <body>
   <!-- CONTENIDO PRINCIPAL -->
@@ -49,6 +49,9 @@
         <div>
           <span class="section-kicker">Organización</span>
           <h2 class="titulo">Proyectos</h2>
+        </div>
+        <div class="section-heading-actions">
+          <button type="button" class="project-header-action" id="open-archived-projects" data-go-section="proyectos-archivados">Proyectos Archivados</button>
         </div>
         <p>Centraliza tareas, tableros y próximos avances por proyecto.</p>
       </div>
@@ -159,6 +162,30 @@
           <div id="projects-list" class="projects-grid">
             <div class="project-empty">Cargando proyectos...</div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROYECTOS ARCHIVADOS -->
+    <section id="proyectos-archivados" class="seccion">
+      <div class="section-heading">
+        <div>
+          <span class="section-kicker">Organización</span>
+          <h2 class="titulo">Proyectos Archivados</h2>
+        </div>
+        <div class="section-heading-actions">
+          <button type="button" class="project-header-action" data-go-section="proyectos">Volver a Proyectos</button>
+        </div>
+        <p>Consulta los espacios archivados y restaura los que vuelvan a estar en uso.</p>
+      </div>
+
+      <div class="project-list-panel archived-projects-panel">
+        <div class="project-list-header">
+          <h3>Archivo de proyectos</h3>
+          <span id="archived-projects-count">0 proyectos</span>
+        </div>
+        <div id="archived-projects-list" class="projects-grid">
+          <div class="project-empty">Cargando proyectos archivados...</div>
         </div>
       </div>
     </section>
@@ -1033,7 +1060,7 @@
   <script src="../../assets/javascript/menu.js?v=20260520-1" defer></script>
   <script src="../../assets/javascript/admin.js" defer></script>
   <script src="../../assets/javascript/users.js?v=20260516-3" defer></script>
-  <script src="../../assets/javascript/projects.js?v=20260520-1" defer></script>
+  <script src="../../assets/javascript/projects.js?v=20260525-1" defer></script>
   <script src="../../assets/javascript/tasks.js?v=20260520-1" defer></script>
   <script src="../../assets/javascript/boards.js?v=20260520-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>

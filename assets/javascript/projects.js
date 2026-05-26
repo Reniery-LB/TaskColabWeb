@@ -4,8 +4,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('form-proyecto');
   const editForm = document.getElementById('project-edit-form');
   const archiveBtn = document.getElementById('project-archive-btn');
+  const openArchivedBtn = document.getElementById('open-archived-projects');
   const list = document.getElementById('projects-list');
   const count = document.getElementById('projects-count');
+  const archivedList = document.getElementById('archived-projects-list');
+  const archivedCount = document.getElementById('archived-projects-count');
   const activeName = document.getElementById('active-project-name');
   const detailName = document.getElementById('project-detail-name');
   const detailDescription = document.getElementById('project-detail-description');
@@ -21,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const editColor = document.getElementById('edit-project-color');
 
   let projects = [];
+  let archivedProjects = [];
   let activeProject = null;
 
   window.TaskColabProjects = {
@@ -31,6 +35,10 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   loadProjects();
+
+  openArchivedBtn?.addEventListener('click', () => {
+    loadArchivedProjects();
+  });
 
   form?.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -152,6 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         localStorage.removeItem('taskcolab_active_project_id');
         await loadProjects();
+        await loadArchivedProjects(false);
         showProjectSuccess('Proyecto archivado correctamente.');
       } catch (error) {
         console.error('Error archivando proyecto:', error);
@@ -271,6 +280,182 @@ document.addEventListener('DOMContentLoaded', () => {
         notifyProjectChanged();
       });
     });
+  }
+
+  async function loadArchivedProjects(showLoading = true) {
+    if (!archivedList) return;
+
+    try {
+      if (showLoading) {
+        archivedList.innerHTML = '<div class="project-empty">Cargando proyectos archivados...</div>';
+      }
+
+      const response = await fetch(`${apiBase}/list_archived_projects.php?t=${Date.now()}`, {
+        cache: 'no-cache'
+      });
+      const json = await response.json();
+
+      if (!response.ok || !json.ok) {
+        throw new Error(json.message || 'No se pudieron cargar proyectos archivados');
+      }
+
+      archivedProjects = json.projects || [];
+      renderArchivedProjects();
+    } catch (error) {
+      console.error('Error cargando proyectos archivados:', error);
+      archivedProjects = [];
+      archivedList.innerHTML = `<div class="project-empty project-empty-error">${escapeHtml(error.message || 'Error al cargar proyectos archivados.')}</div>`;
+      if (archivedCount) archivedCount.textContent = '0 proyectos';
+    }
+  }
+
+  function renderArchivedProjects() {
+    if (!archivedList) return;
+
+    if (archivedCount) {
+      archivedCount.textContent = archivedProjects.length === 1 ? '1 proyecto' : `${archivedProjects.length} proyectos`;
+    }
+
+    if (!archivedProjects.length) {
+      archivedList.innerHTML = '<div class="project-empty">No hay proyectos archivados.</div>';
+      return;
+    }
+
+    archivedList.innerHTML = archivedProjects.map(project => {
+      const total = Number(project.total_tasks || 0);
+      const done = Number(project.done_tasks || 0);
+      const inProgress = Number(project.in_progress_tasks || 0);
+      const progress = clampPercent(total > 0 ? Math.round((done / total) * 100) : 0);
+
+      return `
+        <article class="project-card archived-project-card" data-project-id="${project.id}">
+          <div class="project-card-top">
+            <span class="project-color" style="background:${escapeHtml(project.color || '#1B5CFF')}"></span>
+            <span class="project-status status-${escapeHtml(project.status || 'archived')}">${getStatusLabel(project.status)}</span>
+          </div>
+          <h3>${escapeHtml(project.name)}</h3>
+          <p>${escapeHtml(project.description || 'Sin descripción')}</p>
+          <div class="project-progress">
+            <div>
+              <span>Avance</span>
+              <strong>${progress}%</strong>
+            </div>
+            <div class="project-progress-track">
+              <span style="width:${progress}%"></span>
+            </div>
+          </div>
+          <div class="project-card-meta">
+            <span>${total} tareas</span>
+            <span>${inProgress} en proceso</span>
+            <span>${Number(project.members_count || 1)} miembros</span>
+            <span>${project.due_date ? formatDate(project.due_date) : 'Sin fecha'}</span>
+          </div>
+          <div class="archived-project-actions">
+            <button type="button" class="project-restore-btn" data-project-id="${project.id}">Desarchivar</button>
+            <button type="button" class="project-delete-permanent-btn" data-project-id="${project.id}">Eliminar</button>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    archivedList.querySelectorAll('.project-restore-btn').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const projectId = Number(button.dataset.projectId);
+        const project = archivedProjects.find(item => Number(item.id) === projectId);
+        if (project) restoreArchivedProject(project);
+      });
+    });
+
+    archivedList.querySelectorAll('.project-delete-permanent-btn').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const projectId = Number(button.dataset.projectId);
+        const project = archivedProjects.find(item => Number(item.id) === projectId);
+        if (project) deleteArchivedProject(project);
+      });
+    });
+  }
+
+  function restoreArchivedProject(project) {
+    const restore = async () => {
+      try {
+        const response = await fetch(`${apiBase}/restore_project.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project_id: Number(project.id) })
+        });
+        const json = await response.json();
+
+        if (!response.ok || !json.ok) {
+          throw new Error(json.message || 'No se pudo desarchivar el proyecto');
+        }
+
+        localStorage.setItem('taskcolab_active_project_id', project.id);
+        await loadProjects(project.id);
+        await loadArchivedProjects(false);
+        showProjectSuccess('Proyecto desarchivado correctamente.');
+      } catch (error) {
+        console.error('Error desarchivando proyecto:', error);
+        showProjectError(error.message || 'Error al desarchivar el proyecto.');
+      }
+    };
+
+    if (typeof window.configurarAlerta === 'function') {
+      window.configurarAlerta(
+        'Desarchivar proyecto',
+        `¿Desarchivar "${escapeHtml(project.name)}"?<br>El proyecto volverá a la lista de espacios activos.`,
+        'alerta',
+        {
+          textoConfirmar: 'Desarchivar',
+          onConfirmar: restore
+        }
+      );
+    } else if (confirm(`¿Desarchivar "${project.name}"?`)) {
+      restore();
+    }
+  }
+
+  function deleteArchivedProject(project) {
+    const remove = async () => {
+      try {
+        const response = await fetch(`${apiBase}/delete_archived_project.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project_id: Number(project.id) })
+        });
+        const json = await response.json();
+
+        if (!response.ok || !json.ok) {
+          throw new Error(json.message || 'No se pudo eliminar el proyecto');
+        }
+
+        if (Number(localStorage.getItem('taskcolab_active_project_id')) === Number(project.id)) {
+          localStorage.removeItem('taskcolab_active_project_id');
+        }
+
+        await loadArchivedProjects(false);
+        await loadProjects();
+        showProjectSuccess('Proyecto eliminado permanentemente.');
+      } catch (error) {
+        console.error('Error eliminando proyecto archivado:', error);
+        showProjectError(error.message || 'Error al eliminar el proyecto.');
+      }
+    };
+
+    if (typeof window.configurarAlerta === 'function') {
+      window.configurarAlerta(
+        'Eliminar proyecto',
+        `¿Eliminar permanentemente "${escapeHtml(project.name)}"?<br>Se borrarán sus tareas, tarjetas, chats y relaciones. Esta acción no se puede deshacer.`,
+        'alerta',
+        {
+          textoConfirmar: 'Eliminar',
+          onConfirmar: remove
+        }
+      );
+    } else if (confirm(`¿Eliminar permanentemente "${project.name}"? Esta acción no se puede deshacer.`)) {
+      remove();
+    }
   }
 
   function renderProjectDetail() {
