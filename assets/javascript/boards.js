@@ -23,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Variable para saber en qué columna se está creando
     let columnaActual = 'pending';
+    const appBase = window.APP_BASE || (window.location.pathname.includes('/PROYECTO_GESTOR_TAREAS/') ? '/PROYECTO_GESTOR_TAREAS' : '');
+    const imgBase = window.IMG_BASE || `${appBase}/assets/img`;
 
     // API base para tableros
     const apiBase = window.API_BASE_TABLEROS || '/assets/app/endpointsTableros';
@@ -274,12 +276,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 <span class="priority-pill">${escapeHtml(prioridad)}</span>
             </div>
             <div class="tarjeta-meta">
-                <p><img src="../../assets/img/icono-calendario.png" class="icono" alt=""> ${fecha}</p>
-                <p><img src="../../assets/img/icono-usuario.png" class="icono" alt=""> ${escapeHtml(usuarios)}</p>
+                <p><img src="${imgBase}/icono-calendario.png" class="icono" alt=""> ${fecha}</p>
+                <p><img src="${imgBase}/icono-usuario.png" class="icono" alt=""> ${escapeHtml(usuarios)}</p>
             </div>
             <div class="botones-tarjeta">
                 <button class="eliminar" data-task-id="${task.id}" aria-label="Eliminar tarjeta">
-                    <img src="../../assets/img/basura.png" class="delete-card" alt="Eliminar">
+                    <img src="${imgBase}/basura.png" class="delete-card" alt="Eliminar">
                 </button>
                 <div class="botones-derecha">
                     ${mostrarIzq ? `<button class="mover-izq" data-task-id="${task.id}" data-direction="left" aria-label="Mover a columna anterior">&lt;</button>` : ''}

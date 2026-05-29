@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../bootstrap.php';
+require_once __DIR__ . '/../../../config/app.php';
 
 api_require_method(['POST']);
 
@@ -38,7 +39,7 @@ if ((int)$file['size'] > 2 * 1024 * 1024) {
     api_json(['ok' => false, 'message' => 'La imagen excede 2MB'], 400);
 }
 
-$avatarDir = $_SERVER['DOCUMENT_ROOT'] . '/PROYECTO_GESTOR_TAREAS/assets/uploads/avatars';
+$avatarDir = project_path('assets/uploads/avatars');
 if (!is_dir($avatarDir) && !mkdir($avatarDir, 0755, true)) {
     api_json(['ok' => false, 'message' => 'No se pudo crear el directorio de avatares'], 500);
 }
@@ -54,7 +55,7 @@ if (!move_uploaded_file($file['tmp_name'], $filePath)) {
     api_json(['ok' => false, 'message' => 'Error al guardar la imagen'], 500);
 }
 
-$relativePath = '/PROYECTO_GESTOR_TAREAS/assets/uploads/avatars/' . $fileName;
+$relativePath = app_url('assets/uploads/avatars/' . $fileName);
 
 $stmt = api_db()->prepare('UPDATE users SET avatar_url = ? WHERE id = ?');
 $stmt->execute([$relativePath, $userId]);

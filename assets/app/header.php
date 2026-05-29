@@ -3,6 +3,11 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 $user = $_SESSION['user'] ?? null;
+require_once __DIR__ . '/../../config/app.php';
+$basePath = app_base_path();
+$imgBase = app_url('assets/img');
+$homeLink = app_url('index.html');
+$logoutLink = app_url('assets/app/logout.php');
 
 // Cargar datos de la BD incluyendo avatar_url
 if ($user && isset($user['id'])) {
@@ -23,7 +28,7 @@ if ($user && isset($user['id'])) {
         } else {
             // Usuario no encontrado o inactivo - cerrar sesión
             session_destroy();
-            header('Location: ../../index.html');
+            header('Location: ' . $homeLink);
             exit;
         }
     } catch (Exception $e) {
@@ -37,29 +42,15 @@ $avatarUrl = $user['avatar_url'] ?? null;
 $isAdmin = !empty($user['is_admin']);
 $initial = mb_strtoupper(mb_substr($userName, 0, 1, 'UTF-8'));
 
-$imgBase = '../../assets/img';
-$homeLink = '../../index.html';
-$logoutLink = '../../assets/app/logout.php';
-
-// DETECTAR SI ESTAMOS EN LOCAL O EN PRODUCCIÓN
-$isLocal = (strpos($_SERVER['HTTP_HOST'], 'localhost') !== false || 
-            strpos($_SERVER['HTTP_HOST'], '127.0.0.1') !== false);
-
-// CONFIGURAR RUTAS BASE SEGÚN EL ENTORNO
-if ($isLocal) {
-    $basePath = '/PROYECTO_GESTOR_TAREAS';
-} else {
-    $basePath = ''; // Para producción (InfinityFree)
-}
-
 // Configurar todas las APIs
-$API_BASE = $basePath . '/assets/app/endpoints';
-$API_BASE_PERFIL = $basePath . '/assets/app/endpointsPerfil';
-$API_BASE_TAREAS = $basePath . '/assets/app/endpointsTareas';
-$API_BASE_TABLEROS = $basePath . '/assets/app/endpointsTableros'; 
-$API_BASE_PROJECTS = $basePath . '/assets/app/endpointsProjects';
-$API_BASE_CHAT = $basePath . '/assets/app/endpointsChat';
-$UPLOADS_BASE = $basePath . '/assets/uploads';
+$API_BASE = app_url('assets/app/endpoints');
+$API_BASE_PERFIL = app_url('assets/app/endpointsPerfil');
+$API_BASE_TAREAS = app_url('assets/app/endpointsTareas');
+$API_BASE_TABLEROS = app_url('assets/app/endpointsTableros'); 
+$API_BASE_PROJECTS = app_url('assets/app/endpointsProjects');
+$API_BASE_CHAT = app_url('assets/app/endpointsChat');
+$API_BASE_REPORTES = app_url('assets/app/endpointsReportes');
+$UPLOADS_BASE = app_url('assets/uploads');
 ?>
 <header class="header">
   <div class="left-section">
@@ -92,12 +83,17 @@ $UPLOADS_BASE = $basePath . '/assets/uploads';
 
   <script>
     // CONFIGURACIÓN UNIFICADA DE TODAS LAS APIS
+    window.APP_BASE = "<?php echo htmlspecialchars($basePath, ENT_QUOTES); ?>";
+    window.IMG_BASE = "<?php echo htmlspecialchars($imgBase, ENT_QUOTES); ?>";
+    window.HOME_URL = "<?php echo htmlspecialchars($homeLink, ENT_QUOTES); ?>";
+    window.LOGOUT_URL = "<?php echo htmlspecialchars($logoutLink, ENT_QUOTES); ?>";
     window.API_BASE = "<?php echo $API_BASE; ?>";
     window.API_BASE_PERFIL = "<?php echo $API_BASE_PERFIL; ?>";
     window.API_BASE_TAREAS = "<?php echo $API_BASE_TAREAS; ?>";
     window.API_BASE_TABLEROS = "<?php echo $API_BASE_TABLEROS; ?>"; 
     window.API_BASE_PROJECTS = "<?php echo $API_BASE_PROJECTS; ?>";
     window.API_BASE_CHAT = "<?php echo $API_BASE_CHAT; ?>";
+    window.API_BASE_REPORTES = "<?php echo $API_BASE_REPORTES; ?>";
     window.UPLOADS_BASE = "<?php echo $UPLOADS_BASE; ?>";
     window.CURRENT_USER = <?php echo json_encode($user ?? null, JSON_UNESCAPED_UNICODE); ?>;
     

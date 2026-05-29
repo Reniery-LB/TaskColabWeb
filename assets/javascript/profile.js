@@ -1,6 +1,9 @@
 // assets/javascript/profile.js 
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Inicializando profile.js");
+    const appBase = window.APP_BASE || (window.location.pathname.includes('/PROYECTO_GESTOR_TAREAS/') ? '/PROYECTO_GESTOR_TAREAS' : '');
+    const imgBase = window.IMG_BASE || `${appBase}/assets/img`;
+    const loginUrl = `${appBase}/view/login.html`;
     
     // Elementos del DOM
     const btnCambiarNombre = document.querySelector('.btn-cambiar[data-campo="nombre"]') || 
@@ -15,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
                               document.querySelector('.link-eliminar-cuenta');
     
     // API base para endpoints del perfil
-    const apiBase = window.API_BASE_PERFIL || '/PROYECTO_GESTOR_TAREAS/assets/app/endpointsPerfil';
+    const apiBase = window.API_BASE_PERFIL || `${appBase}/assets/app/endpointsPerfil`;
     console.log("API_BASE Perfil configurado:", apiBase);
     let archivoAvatarSeleccionado = null;
     inicializarProfileCompleto();
@@ -796,12 +799,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         {
                             soloAceptar: true,
                             onConfirmar: () => {
-                                window.location.href = '../../view/login.html';
+                                window.location.href = loginUrl;
                             }
                         }
                     );
                 } else {
-                    window.location.href = '../../view/login.html';
+                    window.location.href = loginUrl;
                 }
             } else {
                 mostrarError(json.message || 'Error al eliminar la cuenta');
@@ -850,7 +853,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         Confirmar Eliminación
                     </h3>
                     
-                    <img src="../../assets/img/alerta.png" alt="Alerta" style="
+                    <img src="${imgBase}/alerta.png" alt="Alerta" style="
                         width: 150px; height: 150px; margin: 15px 0;
                     ">
                     

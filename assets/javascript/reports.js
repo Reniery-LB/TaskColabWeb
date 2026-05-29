@@ -1,8 +1,9 @@
 class ReportsManager {
   constructor() {
-    this.baseUrl = window.API_BASE
+    const appBase = window.APP_BASE || (window.location.pathname.includes('/PROYECTO_GESTOR_TAREAS/') ? '/PROYECTO_GESTOR_TAREAS' : '');
+    this.baseUrl = window.API_BASE_REPORTES || (window.API_BASE
       ? window.API_BASE.replace('/endpoints', '/endpointsReportes')
-      : '/PROYECTO_GESTOR_TAREAS/assets/app/endpointsReportes';
+      : `${appBase}/assets/app/endpointsReportes`);
     this.charts = {};
     this.latestData = null;
     this.isLoading = false;

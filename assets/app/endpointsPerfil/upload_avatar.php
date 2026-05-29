@@ -19,6 +19,7 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
 }
 
 require_once __DIR__ . '/../../../config/db.php';
+require_once __DIR__ . '/../../../config/app.php';
 
 $userId = $_SESSION['user']['id'];
 $response = ['ok' => false, 'message' => 'Error desconocido'];
@@ -48,8 +49,7 @@ try {
         throw new Exception('La imagen excede 2MB');
     }
 
-    // RUTA CORREGIDA - Desde la raíz del servidor web
-    $avatarDir = $_SERVER['DOCUMENT_ROOT'] . '/PROYECTO_GESTOR_TAREAS/assets/uploads/avatars';
+    $avatarDir = project_path('assets/uploads/avatars');
     
     if (!is_dir($avatarDir)) {
         if (!mkdir($avatarDir, 0755, true)) {
@@ -74,8 +74,8 @@ try {
         throw new Exception('El archivo no se creó en la ruta esperada');
     }
 
-    // Ruta relativa para la base de datos 
-    $relativePath = '/PROYECTO_GESTOR_TAREAS/assets/uploads/avatars/' . $fileName;
+    // Ruta pública para la base de datos
+    $relativePath = app_url('assets/uploads/avatars/' . $fileName);
 
     // Actualizar en la base de datos
     $stmt = $pdo->prepare("UPDATE users SET avatar_url = ? WHERE id = ?");

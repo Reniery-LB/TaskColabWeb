@@ -1043,9 +1043,7 @@
   </footer>
   
   <script>
-      // Configuración de API_BASE
-      const apiBase = '<?php echo '/PROYECTO_GESTOR_TAREAS/assets/app/endpoints'; ?>';
-      console.log('API_BASE configurado:', apiBase);
+      console.log('API_BASE configurado:', window.API_BASE);
       
       // Avatar URL
       <?php 
@@ -1056,18 +1054,17 @@
       console.log('Avatar URL:', avatarUrl);
       <?php endif; ?>
       
-      window.API_BASE = apiBase;
   </script>
 
-  <script src="../../assets/javascript/menu.js?v=20260520-1" defer></script>
-  <script src="../../assets/javascript/admin.js" defer></script>
+  <script src="../../assets/javascript/menu.js?v=20260529-prod1" defer></script>
+  <script src="../../assets/javascript/admin.js?v=20260529-prod1" defer></script>
   <script src="../../assets/javascript/users.js?v=20260516-3" defer></script>
   <script src="../../assets/javascript/projects.js?v=20260525-1" defer></script>
   <script src="../../assets/javascript/tasks.js?v=20260520-1" defer></script>
-  <script src="../../assets/javascript/boards.js?v=20260520-1" defer></script>
+  <script src="../../assets/javascript/boards.js?v=20260529-prod1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
-  <script src="../../assets/javascript/reports.js?v=20260520-1" defer></script>
-  <script src="../../assets/javascript/chat.js" defer></script>
-  <script src="../../assets/javascript/profile.js?v=20260516-3" defer></script>
+  <script src="../../assets/javascript/reports.js?v=20260529-prod1" defer></script>
+  <script src="../../assets/javascript/chat.js?v=20260529-prod1" defer></script>
+  <script src="../../assets/javascript/profile.js?v=20260529-prod1" defer></script>
 </body>
 </html>

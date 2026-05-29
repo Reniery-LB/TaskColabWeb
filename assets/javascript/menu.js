@@ -1,5 +1,9 @@
 // assets/javascript/menu.js
 document.addEventListener("DOMContentLoaded", () => {
+  const appBase = window.APP_BASE || (window.location.pathname.includes('/PROYECTO_GESTOR_TAREAS/') ? '/PROYECTO_GESTOR_TAREAS' : '');
+  const imgBase = window.IMG_BASE || `${appBase}/assets/img`;
+  const appUrl = (path) => `${appBase}/${String(path).replace(/^\/+/, '')}`;
+
   // Ocultar el Home mientras ya estamos en Inicio.
   setTimeout(() => {
     const linkCasita = document.querySelector('.sidebar a[data-section="inicio"]');
@@ -93,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Configurar contenido básico
       tituloAlerta.textContent = titulo;
       textoAlerta.innerHTML = mensaje;
-      iconoAlerta.src = tipo === "exito" ? "../../assets/img/exito.png" : "../../assets/img/alerta.png";
+      iconoAlerta.src = tipo === "exito" ? `${imgBase}/exito.png` : `${imgBase}/alerta.png`;
 
       // Configurar visibilidad de botones
       const esSoloAceptar = config.soloAceptar === true;
@@ -646,7 +650,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   confirmarCerrar?.addEventListener("click", () => {
-    window.location.href = "../../assets/app/logout.php";
+    window.location.href = window.LOGOUT_URL || appUrl('assets/app/logout.php');
   });
 
   function getTodayLocalISO() {
@@ -1295,7 +1299,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (subirCambiarFoto) {
         subirCambiarFoto.addEventListener('click', function() {
-            mostrarConfirmacion('../../assets/img/perfil.png');
+            mostrarConfirmacion(`${imgBase}/perfil.png`);
         });
     }
 
@@ -1373,7 +1377,7 @@ document.addEventListener("DOMContentLoaded", () => {
           {
               soloAceptar: true,
               onConfirmar: () => {
-                  window.location.href = "../../index.html";
+                  window.location.href = window.HOME_URL || appUrl('index.html');
               }
           }
       );
