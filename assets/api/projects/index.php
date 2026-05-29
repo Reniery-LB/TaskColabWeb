@@ -12,7 +12,11 @@ $model = new ProjectModel();
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-        $projects = array_map('api_project_payload', $model->listProjects($userId));
+        $archived = filter_var($_GET['archived'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $projects = array_map(
+            'api_project_payload',
+            $archived ? $model->listArchivedProjects($userId) : $model->listProjects($userId)
+        );
         api_json(['ok' => true, 'projects' => $projects, 'count' => count($projects)]);
     }
 
@@ -41,6 +45,13 @@ try {
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'PATCH') {
+        $action = trim((string)($input['action'] ?? ''));
+        if ($action === 'restore') {
+            $model->restoreProject($projectId, $userId);
+            $project = $model->getProjectForUser($projectId, $userId);
+            api_json(['ok' => true, 'message' => 'Proyecto desarchivado', 'project' => api_project_payload($project)]);
+        }
+
         $updates = [];
         if (array_key_exists('name', $input)) $updates['name'] = $input['name'];
         if (array_key_exists('description', $input)) $updates['description'] = $input['description'];
@@ -54,6 +65,17 @@ try {
     }
 
     if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+        $action = trim((string)($input['action'] ?? ''));
+        if ($action === 'delete') {
+            $deleted = $model->deleteArchivedProject($projectId, $userId);
+            api_json([
+                'ok' => true,
+                'message' => 'Proyecto eliminado',
+                'project_id' => $projectId,
+                'deleted' => $deleted,
+            ]);
+        }
+
         $model->archiveProject($projectId, $userId);
         api_json(['ok' => true, 'message' => 'Proyecto archivado', 'project_id' => $projectId]);
     }

@@ -28,15 +28,41 @@ $DB_NAME = $_ENV['DB_NAME'] ?? 'taskcolab';
 $DB_USER = $_ENV['DB_USER'] ?? 'root';
 $DB_PASS = $_ENV['DB_PASS'] ?? '';
 $DB_CHARSET = $_ENV['DB_CHARSET'] ?? 'utf8mb4';
+$DB_TIMEOUT = (int)($_ENV['DB_TIMEOUT'] ?? 5);
+
+ini_set('mysql.connect_timeout', (string)$DB_TIMEOUT);
+ini_set('default_socket_timeout', (string)$DB_TIMEOUT);
 
 $dsn = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_NAME};charset={$DB_CHARSET}";
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     PDO::ATTR_EMULATE_PREPARES   => false,
+    PDO::ATTR_TIMEOUT            => $DB_TIMEOUT,
 ];
 
+function assert_mysql_server_ready($host, $port, $timeout) {
+    $errno = 0;
+    $errstr = '';
+    $socket = @fsockopen($host, (int)$port, $errno, $errstr, (float)$timeout);
+
+    if (!$socket) {
+        throw new PDOException("MySQL no acepta conexiones en {$host}:{$port}. {$errstr}", (int)$errno);
+    }
+
+    stream_set_timeout($socket, (int)$timeout);
+    $byte = fread($socket, 1);
+    $meta = stream_get_meta_data($socket);
+    fclose($socket);
+
+    if ($byte === '' || !empty($meta['timed_out'])) {
+        throw new PDOException("MySQL acepta el puerto {$host}:{$port}, pero no responde el saludo inicial.");
+    }
+}
+
 try {
+    assert_mysql_server_ready($DB_HOST, $DB_PORT, $DB_TIMEOUT);
+
     // CREAR $pdo EN ÁMBITO GLOBAL
     $pdo = new PDO($dsn, $DB_USER, $DB_PASS, $options);
     
@@ -59,15 +85,17 @@ function getDBConnection() {
         return $GLOBALS['pdo'];
     }
     
-    global $DB_HOST, $DB_PORT, $DB_NAME, $DB_USER, $DB_PASS, $DB_CHARSET;
+    global $DB_HOST, $DB_PORT, $DB_NAME, $DB_USER, $DB_PASS, $DB_CHARSET, $DB_TIMEOUT;
     $dsn = "mysql:host={$DB_HOST};port={$DB_PORT};dbname={$DB_NAME};charset={$DB_CHARSET}";
     $options = [
         PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES   => false,
+        PDO::ATTR_TIMEOUT            => $DB_TIMEOUT,
     ];
     
     try {
+        assert_mysql_server_ready($DB_HOST, $DB_PORT, $DB_TIMEOUT);
         $GLOBALS['pdo'] = new PDO($dsn, $DB_USER, $DB_PASS, $options);
         return $GLOBALS['pdo'];
     } catch (PDOException $e) {
