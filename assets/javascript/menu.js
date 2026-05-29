@@ -622,15 +622,19 @@ document.addEventListener("DOMContentLoaded", () => {
   // });
 
   // --- CERRAR SESIÓN ---
-  const iconCerrar = document.querySelector(".header-logout-link img");
+  const enlacesCerrarSesion = document.querySelectorAll(".header-logout-link, .header-logo-logout-link");
   const cancelarCerrar = document.getElementById("cancelarCerrarSesion");
   const confirmarCerrar = document.getElementById("confirmarCerrarSesion");
 
-  iconCerrar?.addEventListener("click", (e) => {
+  function mostrarAlertaCerrarSesion(e) {
     e.preventDefault();
     const seccionActiva = document.querySelector(".seccion.activa");
     ultimaSeccionActiva = seccionActiva ? seccionActiva.id : "inicio";
     window.mostrarSeccion("cerrarSesion");
+  }
+
+  enlacesCerrarSesion.forEach((enlace) => {
+    enlace.addEventListener("click", mostrarAlertaCerrarSesion);
   });
 
   cancelarCerrar?.addEventListener("click", () => {

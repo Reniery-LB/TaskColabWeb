@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reportes</title>
+    <link rel="icon" type="image/png" href="../assets/img/logo.png">
+    <link rel="apple-touch-icon" href="../assets/img/logo.png">
     <link rel="stylesheet" href="../assets/styles/main.css">
 </head>
 <body>
@@ -20,6 +22,16 @@
 
                 <div class="nav-item dropdown">
                     <a class="dropdown-toggle">
+                    Proyectos <span class="arrow">▼</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="../view/proyectos.html"><h4>Reportes por proyecto</h4></a>
+                        <p>Consulta avance, responsables y fechas por cada espacio de trabajo.</p>
+                    </div>
+                </div>
+
+                <div class="nav-item dropdown">
+                    <a class="dropdown-toggle">
                     Tableros <span class="arrow">▼</span>
                     </a>
                     <div class="dropdown-menu">
@@ -33,7 +45,7 @@
                     Tareas <span class="arrow">▼</span>
                     </a>
                     <div class="dropdown-menu">
-                        <a href="../view/usuarios.html"><h4>Gestionar tareas</h4></a>
+                        <a href="../view/tareas.html"><h4>Gestionar tareas</h4></a>
                         <p>Crea, asigna y monitorea tus tareas de forma sencilla.</p>
                     </div>
                 </div>
@@ -43,8 +55,18 @@
                     Usuarios <span class="arrow">▼</span>
                     </a>
                     <div class="dropdown-menu">
-                        <a href="../view/usuarios.html"><h4>Gestión de usuario</h4></a>
+                <a href="../view/usuarios.html"><h4>Gestión de usuarios</h4></a>
                         <p>Crea y edita tu usuario dentro de tus tableros.</p>
+                    </div>
+                </div>
+
+                <div class="nav-item dropdown">
+                    <a class="dropdown-toggle">
+                    Chat <span class="arrow">▼</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="../view/chat.html"><h4>Historial de acuerdos</h4></a>
+                        <p>El chat complementa el seguimiento para entender decisiones y bloqueos.</p>
                     </div>
                 </div>
 
@@ -75,7 +97,7 @@
             <h1 class="title">Reportes</h1>
             <p class="subtitle">
                 Los reportes de TaskColab te permiten entender el progreso de tus proyectos,
-                identificar cuellos de botella y mantener la pruductividad de tu equipo
+                identificar cuellos de botella y mantener la productividad de tu equipo.
             </p>
             <a href="../view/registro.html">
                 <button class="btn-secondary">Generar reporte</button>
@@ -104,6 +126,14 @@
                 <div class="item-header-repo">
                     <img src="../assets/img/calendario-reportes.png" alt="Imagen de un calendario">
                     <p>Cumplimiento de fechas</p>
+                </div>
+                <div class="item-header-repo">
+                    <img src="../assets/img/admintableros.png" alt="imagen de proyecto">
+                    <p>Avance por proyecto</p>
+                </div>
+                <div class="item-header-repo">
+                    <img src="../assets/img/img_comenta.png" alt="imagen de chat">
+                    <p>Seguimiento de comunicación</p>
                 </div>
             </div>
         </div>
