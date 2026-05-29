@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Usuarios</title>
+    <link rel="icon" type="image/png" href="../assets/img/logo.png">
+    <link rel="apple-touch-icon" href="../assets/img/logo.png">
     <link rel="stylesheet" href="../assets/styles/main.css">
 </head>
 <body>
@@ -17,6 +19,16 @@
 
         <nav class="nav-container">
             <div class="nav-links">
+
+            <div class="nav-item dropdown">
+                <a class="dropdown-toggle">Proyectos <span class="arrow">▼</span></a>
+                <div class="dropdown-menu">
+                <a href="../view/proyectos.html">
+                    <h4>Miembros por proyecto</h4>
+                    <p>Administra quién participa en cada espacio de trabajo.</p>
+                </a>
+                </div>
+            </div>
 
             <div class="nav-item dropdown">
                 <a class="dropdown-toggle">Tableros <span class="arrow">▼</span></a>
@@ -42,8 +54,18 @@
                 <a class="dropdown-toggle">Usuarios <span class="arrow">▼</span></a>
                 <div class="dropdown-menu">
                 <a href="../view/usuarios.html">
-                    <h4>Géstor de usuario</h4>
+                    <h4>Gestión de usuarios</h4>
                     <p>Crea y edita tu usuario dentro de tus tableros.</p>
+                </a>
+                </div>
+            </div>
+
+            <div class="nav-item dropdown">
+                <a class="dropdown-toggle">Chat <span class="arrow">▼</span></a>
+                <div class="dropdown-menu">
+                <a href="../view/chat.html">
+                    <h4>Chat del equipo</h4>
+                    <p>Habla con usuarios específicos o con todos los miembros de un proyecto.</p>
                 </a>
                 </div>
             </div>
@@ -53,7 +75,7 @@
                 <div class="dropdown-menu">
                 <a href="../view/reportes.html">
                     <h4>Panel de reportes</h4>
-                    <p>Visualizar el progreso, análiza el rendimiento y mejora la productividad de tu equipo.</p>
+                    <p>Visualiza el progreso, analiza el rendimiento y mejora la productividad de tu equipo.</p>
                 </a>
                 </div>
             </div>
@@ -77,8 +99,8 @@
         <div class="hero-content">
             <h1 class="title">Usuarios</h1>
             <p class="subtitle">
-               En TaskColab, cada usuario tiene sus espacio, su rol y su voz.
-               Administra tu equipo con facilidad y mantén la productividad.
+               En TaskColab, cada usuario tiene su espacio, su rol y su voz.
+               Administra tu equipo, sus proyectos y sus conversaciones con facilidad.
             </p>
             <a href="../view/registro.html">
                 <button class="btn-secondary">Crear gratis</button>
@@ -92,8 +114,8 @@
         <div class="why-parte1-usuarios">
             <h3>Personaliza tu propio perfil</h3>
             <p>
-                Cada usuario tiene un espacio unico done puede gestionar su información personal, foto 
-                de perfil, plografia y proyectos activos. Esto ayuda a mantener una identidad clara en el equipo o 
+                Cada usuario tiene un espacio único donde puede gestionar su información personal, foto 
+                de perfil, biografía y proyectos activos. Esto ayuda a mantener una identidad clara en el equipo o 
                 área de trabajo.
             </p>
         </div>
@@ -102,8 +124,8 @@
                 <div class="user-header">
                 <img src="../assets/img/fotouser.png" alt="Imagen de perfil de usuario">
                 <div class="user-info">
-                    <h3>Diaz Zahir</h3>
-                    <h4>zdiaz_23@alu.uabcs.mx</h4>
+                    <h3>Reniery Lucero</h3>
+                    <h4>usuario@gmail.com</h4>
                 </div>
                 </div>
                 <ul>
@@ -120,8 +142,8 @@
         <div class="features-grid-usuarios">
             <div>
                 <h3>Controla tu acceso y responsabilidades</h3>
-                <p>Define si eres Administrados, colaborador o invitado. <br>
-                    Cada rol tiene permisos especificospara la creación o la edcion de los tableros.
+                <p>Define si eres administrador, colaborador o invitado. <br>
+                    Cada rol tiene permisos específicos para la creación o la edición de proyectos, tableros y tareas.
                 </p>
             </div>
             <div class="feature-item-usuarios">
@@ -146,9 +168,9 @@
                 <p>Solo puede ver tableros y tareas asignadas</p>
             </div>
             <div>
-                <h3>Conecta con tu requipo</h3>
-                <p>Agrega a compañeros u otros usuarios a tus proyectos, comenta en tiempo real y comparte archivos o enlaces
-                    directamente desde tu perfil.
+                <h3>Conecta con tu equipo</h3>
+                <p>Agrega compañeros a tus proyectos, abre chats privados o de proyecto y comparte acuerdos
+                    directamente desde el espacio de trabajo.
                 </p>
                 <a href="../view/registro.html">
                     <button class="btn-secondary">Construye tu equipo</button>

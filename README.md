@@ -6,11 +6,25 @@
 
 ## 🚀 Características Principales
 
+### 📁 Proyectos
+- Espacios de trabajo que agrupan tableros, tareas, miembros y chat
+- Creación de proyectos con nombre, descripción, fecha objetivo y color
+- Estados: Activo, Pausado y Archivado
+- KPIs en tiempo real: total de tareas, en proceso, completadas y porcentaje de avance
+- Archivo y restauración de proyectos
+
+### 💬 Chat
+- Chat de proyecto: canal grupal vinculado a cada espacio de trabajo
+- Chat privado (directo) entre usuarios
+- Historial de mensajes en tiempo real
+- Acceso rápido desde el header con el botón "Chats"
+
 ### 📊 Tableros Kanban
 - Visualización de tareas en columnas: **Pendiente**, **En Proceso** y **Completado**
 - Creación rápida de tarjetas con información detallada
 - Movimiento fluido de tareas entre estados
 - Asignación de usuarios y prioridades
+- Filtrado por proyecto activo
 
 ### ✅ Gestión de Tareas
 - Vista completa de todas las tareas en formato tabla
@@ -20,7 +34,7 @@
 
 ### 📈 Reportes y Estadísticas
 - Exportación de reportes en formato PDF
-- Métricas de progreso por tablero
+- Métricas de progreso por tablero y por proyecto
 - Análisis de usuarios activos
 - Identificación de tareas atrasadas
 - Dashboard con estadísticas en tiempo real
@@ -130,6 +144,15 @@ taskcolab/
 
 ---
 
+## 🔑 Credenciales de Uso (Demo)
+
+| Rol | Correo | Contraseña |
+|-----|--------|------------|
+| Administrador | admin@gmail.com | Admin1234 |
+| Usuario | usuario@gmail.com | Usuario1234 |
+
+---
+
 ## 🎯 Uso del Sistema
 
 ### Registro e Inicio de Sesión
@@ -178,15 +201,32 @@ taskcolab/
 
 ## 📊 Módulos del Sistema
 
-### 1. Tableros
+### 1. Proyectos
+Espacios de trabajo que centralizan todo el trabajo por iniciativa:
+- Nombre, descripción, color y fecha objetivo
+- Estados: Activo, Pausado, Archivado
+- KPIs en tiempo real (total, en proceso, completadas, avance %)
+- Panel de edición y archivo de proyectos
+- Los tableros se vinculan a un proyecto activo
+
+### 2. Chat
+Sistema de mensajería integrado:
+- Chat grupal por proyecto
+- Chat directo (privado) entre usuarios
+- Historial de conversaciones
+- Acceso desde el botón "Chats" en el header
+- Notificaciones de mensajes no leídos
+
+### 3. Tableros
 Visualización tipo Kanban con tres columnas principales. Las tarjetas incluyen:
 - Título de la tarea
 - Fecha límite
 - Usuario asignado
 - Nivel de prioridad
 - Botones de acción (eliminar, mover)
+- Filtrado por proyecto activo
 
-### 2. Tareas
+### 4. Tareas
 Tabla completa con todas las tareas mostrando:
 - Descripción
 - Título del tablero
@@ -194,15 +234,15 @@ Tabla completa con todas las tareas mostrando:
 - Usuario asignado
 - Checkbox para eliminación múltiple
 
-### 3. Reportes
+### 5. Reportes
 Dashboard con métricas:
 - Total de tareas
 - Distribución por estado (Pendiente/En Proceso/Completado)
-- Progreso por tablero (%)
+- Progreso por tablero y por proyecto (%)
 - Usuarios más activos
 - Tareas atrasadas
 
-### 4. Usuarios
+### 6. Usuarios
 Gestión completa de la información de usuarios:
 - Nombre completo
 - Correo electrónico
@@ -211,7 +251,7 @@ Gestión completa de la información de usuarios:
 - Estado (Activo/Inactivo)
 - Última actualización
 
-### 5. Perfil
+### 7. Perfil
 Panel personal del usuario:
 - Avatar personalizable
 - Edición de datos (nombre, correo, contraseña)
@@ -236,8 +276,7 @@ Este es un proyecto académico. Si deseas contribuir:
 ## 👥 Equipo de Desarrollo
 
 - **Keyra Yariely Grijalva Ochoa** - Frontend Developer
-- **Reniery Lucero Beltrán** - Backend Developer  
-- **Zahir Fernando Díaz Barrera** - UI/UX Designer & QA
+- **Reniery Lucero Beltrán** - Backend Developer
 
 ---
 

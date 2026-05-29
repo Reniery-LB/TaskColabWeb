@@ -3,8 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>TaskColab</title>
-    <link rel="stylesheet" href="assets/styles/main.css">
+    <link rel="icon" type="image/png" href="assets/img/logo.png">
+    <link rel="apple-touch-icon" href="assets/img/logo.png">
+    <link rel="stylesheet" href="assets/styles/main.css?v=20260528-2">
 </head>
 <body>
     <!-- NAVBAR -->
@@ -15,6 +20,16 @@
 
         <nav class="nav-container">
             <div class="nav-links">
+
+                <div class="nav-item dropdown">
+                    <a class="dropdown-toggle">
+                    Proyectos <span class="arrow">▼</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="./view/proyectos.html"><h4>Espacios de proyecto</h4></a>
+                        <p>Centraliza tableros, tareas, responsables, fechas y avances por iniciativa.</p>
+                    </div>
+                </div>
 
                 <div class="nav-item dropdown">
                     <a class="dropdown-toggle">
@@ -41,8 +56,18 @@
                     Usuarios <span class="arrow">▼</span>
                     </a>
                     <div class="dropdown-menu">
-                        <a href="./view/usuarios.html"><h4>Gestión de usuario</h4></a>
+                <a href="./view/usuarios.html"><h4>Gestión de usuarios</h4></a>
                         <p>Crea y edita tu usuario dentro de tus tableros.</p>
+                    </div>
+                </div>
+
+                <div class="nav-item dropdown">
+                    <a class="dropdown-toggle">
+                    Chat <span class="arrow">▼</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="./view/chat.html"><h4>Mensajería del equipo</h4></a>
+                        <p>Abre chats privados o conversaciones por proyecto para decidir sin salir del sistema.</p>
                     </div>
                 </div>
 
@@ -72,7 +97,7 @@
         <div class="hero-content">
             <h1 class="title">Task<span>Colab</span></h1>
             <p class="subtitle">
-                Es un gestor de tareas colaborativo diseñado para equipos y proyectos de cualquier tamaño.
+                Es un gestor colaborativo para proyectos, tableros, tareas, usuarios, reportes y chat de equipo.
             </p>
             <a href="./view/registro.html">
                 <button class="btn-secondary">Comenzar gratis</button>
@@ -90,7 +115,7 @@
         <div class="features-grid">
             <div class="feature-item">
                 <img src="assets/img/admintableros.png" alt="imagen de un tablero">
-                <p>Administra Tableros</p>
+                <p>Organiza proyectos</p>
             </div>
             <div class="feature-item">
                 <img src="assets/img/img_tareas.png" alt="Imagen de tareas">
@@ -98,7 +123,7 @@
             </div>
             <div class="feature-item">
                 <img src="assets/img/img_comenta.png" alt="Imagen de comentarios">
-                <p>Comenta en tiempo real</p>
+                <p>Chatea con tu equipo</p>
             </div>
             <div class="feature-item">
                 <img src="assets/img/img_equipo.png" alt="Imagen de equipo">
@@ -122,6 +147,7 @@
                 <li>Fácil de usar</li>
                 <li>Todo en un solo lugar</li>
                 <li>Colaboración eficiente</li>
+                <li>Proyectos con chat integrado</li>
                 <li>Escalable</li>
             </ul>
         </div>
@@ -131,6 +157,14 @@
     <section class="main-features">
         <h3>Características Principales</h3>
         <div class="main-features-list">
+            <div class="feature-card">
+                <img src="assets/img/12634706 1.png" alt="">
+                <p><strong>Proyectos centralizados</strong> - Agrupa tableros, tareas, miembros, fechas objetivo y estados para separar cada iniciativa del equipo.</p>
+            </div>
+            <div class="feature-card">
+                <img src="assets/img/img_comenta.png" alt="">
+                <p><strong>Chat de proyecto y chat privado</strong> - Conversa con el equipo, revisa mensajes recientes y mantén el contexto conectado al trabajo.</p>
+            </div>
             <div class="feature-card">
                 <img src="assets/img/12634706 1.png" alt="">
                 <p><strong>Gestión de Tableros</strong> - Crea, edita y organiza tableros para cada proyecto. Visualiza el progreso y prioridades en un solo lugar.</p>
@@ -172,6 +206,6 @@
         <p>© 2025 Task<span class="colab-black">Colab</span> - Todos los derechos reservados.</p>
     </footer>
 
-    <script src="./assets/javascript/menu.js"></script>
+    <script src="./assets/javascript/menu.js?v=20260528-2"></script>
 </body>
 </html>

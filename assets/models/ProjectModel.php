@@ -144,7 +144,7 @@ class ProjectModel {
                     p.due_date,
                     p.created_at,
                     p.updated_at,
-                    COALESCE(b.id, 0) AS board_id,
+                    COALESCE(MIN(b.id), 0) AS board_id,
                     COUNT(DISTINCT t.id) AS total_tasks,
                     COUNT(DISTINCT CASE WHEN t.status = 'pending' AND t.is_active = 1 THEN t.id END) AS pending_tasks,
                     COUNT(DISTINCT CASE WHEN t.status = 'in_progress' AND t.is_active = 1 THEN t.id END) AS in_progress_tasks,
@@ -155,7 +155,7 @@ class ProjectModel {
                 LEFT JOIN tasks t ON t.board_id = b.id AND t.is_active = 1
                 LEFT JOIN project_members pm_all ON pm_all.project_id = p.id
                 WHERE {$statusFilter}
-                GROUP BY p.id, p.name, p.description, p.owner_id, p.status, p.color, p.due_date, p.created_at, p.updated_at, b.id
+                GROUP BY p.id, p.name, p.description, p.owner_id, p.status, p.color, p.due_date, p.created_at, p.updated_at
                 ORDER BY p.updated_at DESC, p.created_at DESC
             ");
             $stmt->execute();
@@ -173,7 +173,7 @@ class ProjectModel {
                 p.due_date,
                 p.created_at,
                 p.updated_at,
-                COALESCE(b.id, 0) AS board_id,
+                COALESCE(MIN(b.id), 0) AS board_id,
                 COUNT(DISTINCT t.id) AS total_tasks,
                 COUNT(DISTINCT CASE WHEN t.status = 'pending' AND t.is_active = 1 THEN t.id END) AS pending_tasks,
                 COUNT(DISTINCT CASE WHEN t.status = 'in_progress' AND t.is_active = 1 THEN t.id END) AS in_progress_tasks,
@@ -203,7 +203,7 @@ class ProjectModel {
                       AND assigned_ta.user_id = :assigned_user_id
                 )
               )
-            GROUP BY p.id, p.name, p.description, p.owner_id, p.status, p.color, p.due_date, p.created_at, p.updated_at, b.id
+            GROUP BY p.id, p.name, p.description, p.owner_id, p.status, p.color, p.due_date, p.created_at, p.updated_at
             ORDER BY p.updated_at DESC, p.created_at DESC
         ");
         $stmt->execute([
@@ -216,6 +216,24 @@ class ProjectModel {
     }
 
     public function createProject(array $data, $userId, $reuseExistingBoard = false) {
+        $name = trim($data['name'] ?? '');
+        if ($name === '') {
+            throw new Exception('El nombre del proyecto es obligatorio');
+        }
+
+        $duplicateStmt = $this->conn->prepare("
+            SELECT id
+            FROM projects
+            WHERE owner_id = ?
+              AND LOWER(name) = LOWER(?)
+              AND status <> 'archived'
+            LIMIT 1
+        ");
+        $duplicateStmt->execute([$userId, $name]);
+        if ($duplicateStmt->fetchColumn()) {
+            throw new Exception('Ya existe un proyecto activo con ese nombre');
+        }
+
         $this->conn->beginTransaction();
 
         try {
@@ -224,7 +242,7 @@ class ProjectModel {
                 VALUES (:name, :description, :owner_id, :status, :color, :due_date)
             ");
             $stmt->execute([
-                ':name' => trim($data['name']),
+                ':name' => $name,
                 ':description' => trim($data['description'] ?? ''),
                 ':owner_id' => $userId,
                 ':status' => $data['status'] ?? 'active',
@@ -280,7 +298,7 @@ class ProjectModel {
 
             return [
                 'id' => $projectId,
-                'name' => trim($data['name']),
+                'name' => $name,
                 'description' => trim($data['description'] ?? ''),
                 'owner_id' => $userId,
                 'status' => $data['status'] ?? 'active',
@@ -361,6 +379,22 @@ class ProjectModel {
             if ($name === '') {
                 throw new Exception('El nombre del proyecto es obligatorio');
             }
+
+            $duplicateStmt = $this->conn->prepare("
+                SELECT duplicate_project.id
+                FROM projects duplicate_project
+                INNER JOIN projects current_project ON current_project.id = ?
+                WHERE duplicate_project.id <> current_project.id
+                  AND duplicate_project.owner_id <=> current_project.owner_id
+                  AND LOWER(duplicate_project.name) = LOWER(?)
+                  AND duplicate_project.status <> 'archived'
+                LIMIT 1
+            ");
+            $duplicateStmt->execute([$projectId, $name]);
+            if ($duplicateStmt->fetchColumn()) {
+                throw new Exception('Ya existe un proyecto activo con ese nombre');
+            }
+
             $fields[] = 'name = :name';
             $params[':name'] = $name;
         }

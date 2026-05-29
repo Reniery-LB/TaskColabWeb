@@ -64,7 +64,7 @@ $UPLOADS_BASE = $basePath . '/assets/uploads';
 <header class="header">
   <div class="left-section">
     <div class="logo-box-todo">
-      <a href="<?php echo $logoutLink; ?>" aria-label="Cerrar sesión e ir al inicio"><img src="<?php echo $imgBase; ?>/logo.png" width="30" alt="logo_tareas" class="logo"></a>
+      <a href="<?php echo $logoutLink; ?>" class="header-logo-logout-link" aria-label="Cerrar sesión"><img src="<?php echo $imgBase; ?>/logo.png" width="30" alt="logo_tareas" class="logo"></a>
     </div>
     <div class="tab-container">
       <h2 class="tab">Espacio de trabajo</h2>

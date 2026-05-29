@@ -60,10 +60,10 @@ try {
     ]);
 } catch (Exception $e) {
     error_log('Error en create_project: ' . $e->getMessage());
-    http_response_code(500);
+    http_response_code(400);
     echo json_encode([
         'ok' => false,
-        'message' => 'Error al crear el proyecto',
+        'message' => $e->getMessage(),
         'error' => $e->getMessage()
     ]);
 }

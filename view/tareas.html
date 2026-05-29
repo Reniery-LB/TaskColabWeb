@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tareas</title>
+    <link rel="icon" type="image/png" href="../assets/img/logo.png">
+    <link rel="apple-touch-icon" href="../assets/img/logo.png">
     <link rel="stylesheet" href="../assets/styles/main.css">
 </head>
 <body>
@@ -17,6 +19,16 @@
 
         <nav class="nav-container">
             <div class="nav-links">
+
+                <div class="nav-item dropdown">
+                    <a class="dropdown-toggle">
+                    Proyectos <span class="arrow">▼</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="../view/proyectos.html"><h4>Espacios de proyecto</h4></a>
+                        <p>Filtra tareas por proyecto y conserva fechas, miembros y avances conectados.</p>
+                    </div>
+                </div>
 
                 <div class="nav-item dropdown">
                     <a class="dropdown-toggle">
@@ -43,8 +55,18 @@
                     Usuarios <span class="arrow">▼</span>
                     </a>
                     <div class="dropdown-menu">
-                        <a href="../view/usuarios.html"><h4>Gestión de usuario</h4></a>
+                <a href="../view/usuarios.html"><h4>Gestión de usuarios</h4></a>
                         <p>Crea y edita tu usuario dentro de tus tableros.</p>
+                    </div>
+                </div>
+
+                <div class="nav-item dropdown">
+                    <a class="dropdown-toggle">
+                    Chat <span class="arrow">▼</span>
+                    </a>
+                    <div class="dropdown-menu">
+                        <a href="../view/chat.html"><h4>Conversaciones</h4></a>
+                        <p>Coordina tareas con chats privados y chats de proyecto.</p>
                     </div>
                 </div>
 
@@ -75,7 +97,7 @@
             <h1 class="title">Tareas</h1>
             <p class="subtitle">
                Desde una sola vista puedes crear, editar y asignar tareas, mantener
-               la comunicación activa y ver el progreso.
+               la comunicación activa y ver el progreso por proyecto.
             </p>
             <a href="../view/registro.html">
                 <button class="btn-secondary">Crear gratis</button>
@@ -136,7 +158,7 @@
     <!-- FEACTURES -->
     <section class="features-task">
         <div class="features-task-box">
-            <h3>Así funcionan los tableros en TaskColab</h3>
+            <h3>Así funcionan las tareas en TaskColab</h3>
             <div class="features-steps">
                 <div class="step">
                     <div class="task"><img src="../assets/img/paloma-task.png"></div>
@@ -156,7 +178,15 @@
                 </div>
                 <div class="step">
                     <div class="task"><img src="../assets/img/paloma-task.png"></div>
-                    <p>Comenta y puedes darle seguimiento real a todas tus tareas</p>
+                    <p>Comenta y dale seguimiento real a todas tus tareas.</p>
+                </div>
+                <div class="step">
+                    <div class="task"><img src="../assets/img/paloma-task.png"></div>
+                    <p>Relaciona cada tarea con su proyecto para ordenar prioridades y reportes.</p>
+                </div>
+                <div class="step">
+                    <div class="task"><img src="../assets/img/paloma-task.png"></div>
+                    <p>Usa el chat del proyecto para aclarar cambios, bloqueos y entregas.</p>
                 </div>
             </div>
             <h3>¡Organiza y controla tus tareas desde un solo lugar!</h3>

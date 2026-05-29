@@ -6,6 +6,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestor de Tareas</title>
+  <link rel="icon" type="image/png" href="../../assets/img/logo.png">
+  <link rel="apple-touch-icon" href="../../assets/img/logo.png">
   <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260525-1">
 </head>
 <body>
@@ -589,8 +591,8 @@
 
                 <tbody class="tabla-usuarios">
                     <tr data-id="0">
-                        <td>Zahir Fernando</td>
-                        <td>zdiaz_23@alu.uabcs.mx</td>
+                        <td>Usuario Prueba</td>
+                        <td>usuario@gmail.com</td>
                         <td>5</td>
                         <td>Responsable de tareas urgentes</td>
                     </tr>
@@ -910,8 +912,8 @@
           <tbody>
             <!-- Usuarios existentes -->
             <tr>
-              <td>Zahir Fernando</td>
-              <td>zd@z.23@alu.uabcs.mx</td>
+              <td>Usuario Prueba</td>
+              <td>usuario@gmail.com</td>
               <td>8</td>
               <td>No trabaja</td>
               <td class="acciones-celda">
