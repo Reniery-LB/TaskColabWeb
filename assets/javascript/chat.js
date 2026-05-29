@@ -3,8 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const section = document.getElementById('chat');
   if (!section) return;
 
-  const apiBase = window.API_BASE_CHAT || '/PROYECTO_GESTOR_TAREAS/assets/app/endpointsChat';
-  const usersApi = window.API_BASE || '/PROYECTO_GESTOR_TAREAS/assets/app/endpoints';
+  const appBase = window.APP_BASE || (window.location.pathname.includes('/PROYECTO_GESTOR_TAREAS/') ? '/PROYECTO_GESTOR_TAREAS' : '');
+  const apiBase = window.API_BASE_CHAT || `${appBase}/assets/app/endpointsChat`;
+  const usersApi = window.API_BASE || `${appBase}/assets/app/endpoints`;
   const currentUser = window.CURRENT_USER || {};
 
   const conversationList = document.getElementById('chat-conversations-list');

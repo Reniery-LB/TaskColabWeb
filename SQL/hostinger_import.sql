@@ -5,9 +5,32 @@
 --  2. Ve a la pestaña "Importar"
 --  3. Sube este archivo
 --  *** NO incluye CREATE DATABASE ni USE taskcolab ***
+--  *** RECREA las tablas de TaskColab y borra datos anteriores de esas tablas ***
 -- ============================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS message_attachments;
+DROP TABLE IF EXISTS message_reads;
+DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS conversation_members;
+DROP TABLE IF EXISTS conversations;
+DROP TABLE IF EXISTS sync_events;
+DROP TABLE IF EXISTS user_sessions;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS activity_logs;
+DROP TABLE IF EXISTS task_tags;
+DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS attachments;
+DROP TABLE IF EXISTS comments;
+DROP TABLE IF EXISTS task_assignments;
+DROP TABLE IF EXISTS tasks;
+DROP TABLE IF EXISTS board_members;
+DROP TABLE IF EXISTS boards;
+DROP TABLE IF EXISTS project_members;
+DROP TABLE IF EXISTS projects;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS roles;
 
 -- ============================================================
 -- ESQUEMA (taskcolab.sql)
@@ -37,6 +60,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- Tabla boards
 CREATE TABLE IF NOT EXISTS boards (
   id INT AUTO_INCREMENT PRIMARY KEY,
+  project_id INT NULL,
   owner_id INT NULL,
   title VARCHAR(200) NOT NULL,
   description TEXT,
@@ -162,9 +186,9 @@ CREATE TABLE IF NOT EXISTS notifications (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Índices adicionales
-CREATE INDEX IF NOT EXISTS idx_boards_owner_id ON boards(owner_id);
-CREATE INDEX IF NOT EXISTS idx_task_assignments_user_id ON task_assignments(user_id);
-CREATE INDEX IF NOT EXISTS idx_comments_task_id ON comments(task_id);
+CREATE INDEX idx_boards_owner_id ON boards(owner_id);
+CREATE INDEX idx_task_assignments_user_id ON task_assignments(user_id);
+CREATE INDEX idx_comments_task_id ON comments(task_id);
 
 -- ============================================================
 -- 2026_05_12 – Sesiones para app móvil
@@ -233,8 +257,6 @@ CREATE TABLE IF NOT EXISTS project_members (
   INDEX idx_project_members_project (project_id),
   INDEX idx_project_members_user (user_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-ALTER TABLE boards ADD COLUMN IF NOT EXISTS project_id INT NULL AFTER id;
 
 -- ============================================================
 -- 2026_05_16 – Chat

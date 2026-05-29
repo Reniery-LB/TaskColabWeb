@@ -3,7 +3,9 @@ console.log('admin.js cargado - Inicializando...');
 
 class AdminManager {
     constructor() {
-        this.baseUrl = window.API_BASE || '/PROYECTO_GESTOR_TAREAS/assets/app/endpoints';
+        const appBase = window.APP_BASE || (window.location.pathname.includes('/PROYECTO_GESTOR_TAREAS/') ? '/PROYECTO_GESTOR_TAREAS' : '');
+        this.baseUrl = window.API_BASE || `${appBase}/assets/app/endpoints`;
+        this.imgBase = window.IMG_BASE || `${appBase}/assets/img`;
         this.currentUser = window.CURRENT_USER;
         this.users = [];
         this.availableTasks = [];
@@ -191,7 +193,7 @@ class AdminManager {
                 console.log('Primer intento falló, intentando ruta alternativa...');
                 
                 if (window.location.hostname.includes('localhost')) {
-                    const alternativeUrl = '/PROYECTO_GESTOR_TAREAS/assets/app/endpoints/get_available_tasks.php';
+                    const alternativeUrl = `${this.baseUrl}/get_available_tasks.php`;
                     console.log('Intentando con URL alternativa:', alternativeUrl);
                     response = await fetch(alternativeUrl);
                 }
@@ -238,10 +240,10 @@ class AdminManager {
                 <td>${this.escapeHtml(user.notes || '')}</td>
                 <td class="acciones-celda">
                     <button class="btn-editar-admin">
-                        <img src="../../assets/img/editar.png" alt="Editar">
+                        <img src="${this.imgBase}/editar.png" alt="Editar">
                     </button>
                     <button class="btn-eliminar-admin">
-                        <img src="../../assets/img/eliminar.png" alt="Eliminar">
+                        <img src="${this.imgBase}/eliminar.png" alt="Eliminar">
                     </button>
                 </td>
             `;

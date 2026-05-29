@@ -17,11 +17,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 if (session_status() === PHP_SESSION_NONE) session_start();
 
-// RUTAS ABSOLUTAS
-$basePath = $_SERVER['DOCUMENT_ROOT'] . '/PROYECTO_GESTOR_TAREAS';
-$dbPath = $basePath . '/config/db.php';
-$taskModelPath = $basePath . '/assets/models/TaskModel.php';
-$activityModelPath = $basePath . '/assets/models/ActivityModel.php';
+// Rutas basadas en la ubicación real del proyecto, no en el dominio.
+$dbPath = __DIR__ . '/../../../config/db.php';
+$taskModelPath = __DIR__ . '/../../models/TaskModel.php';
+$activityModelPath = __DIR__ . '/../../models/ActivityModel.php';
 
 try {
     // Cargar archivos
