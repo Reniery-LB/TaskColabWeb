@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const titulo = formData.get('titulo-tarjeta')?.trim() || '';
         const descripcion = formData.get('descripcion-tarjeta')?.trim() || '';
         const usuarioId = getSelectedUserIds(selectUsuario);
-        const prioridad = formData.get('prioridad-tarjeta') || 'Media prioridad';
+        const prioridad = formData.get('prioridad-tarjeta') || 'Media';
         const fecha = formData.get('fecha-tarjeta') || '';
         
         const tituloBackup = inputTitulo?.value?.trim() || '';

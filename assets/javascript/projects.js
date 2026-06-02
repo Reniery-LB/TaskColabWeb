@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const archivedList = document.getElementById('archived-projects-list');
   const archivedCount = document.getElementById('archived-projects-count');
   const activeName = document.getElementById('active-project-name');
+  const quickProjectSwitchers = document.querySelectorAll('.quick-project-switcher');
   const detailName = document.getElementById('project-detail-name');
   const detailDescription = document.getElementById('project-detail-description');
   const detailStatus = document.getElementById('project-detail-status');
@@ -31,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     getActiveProject: () => activeProject,
     getActiveBoardId: () => activeProject?.board_id || 1,
     getProjects: () => projects,
+    setActiveProjectById,
     reload: loadProjects
   };
 
@@ -38,6 +40,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
   openArchivedBtn?.addEventListener('click', () => {
     loadArchivedProjects();
+  });
+
+  quickProjectSwitchers.forEach((switcher) => {
+    const toggle = switcher.querySelector('.quick-project-toggle');
+    const menu = switcher.querySelector('.quick-project-menu');
+    toggle?.addEventListener('click', (event) => {
+      event.stopPropagation();
+      const willOpen = menu?.hidden !== false;
+      closeQuickProjectMenus(menu);
+      if (menu) menu.hidden = !willOpen;
+      toggle.setAttribute('aria-expanded', String(willOpen));
+    });
+  });
+
+  document.addEventListener('click', (event) => {
+    const clickedInside = event.target.closest?.('.quick-project-switcher');
+    if (!clickedInside) closeQuickProjectMenus();
   });
 
   form?.addEventListener('submit', async (event) => {
@@ -207,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       renderProjects();
       renderProjectDetail();
+      renderQuickProjectMenu();
       notifyProjectChanged();
     } catch (error) {
       console.error('Error cargando proyectos:', error);
@@ -215,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
       list.innerHTML = `<div class="project-empty project-empty-error">${escapeHtml(error.message || 'Error al cargar proyectos.')}</div>`;
       if (count) count.textContent = '0 proyectos';
       renderProjectDetail();
+      renderQuickProjectMenu();
       notifyProjectChanged();
     }
   }
@@ -269,16 +290,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
     list.querySelectorAll('.project-card').forEach((card) => {
       card.addEventListener('click', () => {
-        const projectId = Number(card.dataset.projectId);
-        const nextProject = projects.find(project => Number(project.id) === projectId);
-        if (!nextProject) return;
-
-        activeProject = nextProject;
-        localStorage.setItem('taskcolab_active_project_id', activeProject.id);
-        renderProjects();
-        renderProjectDetail();
-        notifyProjectChanged();
+        setActiveProjectById(Number(card.dataset.projectId));
       });
+    });
+  }
+
+  function renderQuickProjectMenu() {
+    const menus = document.querySelectorAll('.quick-project-menu');
+    if (!menus.length) return;
+
+    menus.forEach((menu) => {
+      if (!projects.length) {
+        menu.innerHTML = '<div class="quick-project-empty">No hay proyectos activos.</div>';
+        return;
+      }
+
+      menu.innerHTML = projects.map(project => {
+        const isActive = activeProject && Number(activeProject.id) === Number(project.id);
+        return `
+          <button type="button" class="quick-project-option ${isActive ? 'active' : ''}" data-project-id="${project.id}">
+            <span class="project-color" style="background:${escapeHtml(project.color || '#1B5CFF')}"></span>
+            <span class="quick-project-name">${escapeHtml(project.name || 'Proyecto')}</span>
+            ${isActive ? '<strong>Activo</strong>' : ''}
+          </button>
+        `;
+      }).join('');
+
+      menu.querySelectorAll('.quick-project-option').forEach((button) => {
+        button.addEventListener('click', (event) => {
+          event.stopPropagation();
+          setActiveProjectById(Number(button.dataset.projectId), true);
+        });
+      });
+    });
+  }
+
+  function setActiveProjectById(projectId, closeMenu = false) {
+    const nextProject = projects.find(project => Number(project.id) === Number(projectId));
+    if (!nextProject) return;
+
+    activeProject = nextProject;
+    localStorage.setItem('taskcolab_active_project_id', activeProject.id);
+    renderProjects();
+    renderProjectDetail();
+    renderQuickProjectMenu();
+    notifyProjectChanged();
+    if (closeMenu) closeQuickProjectMenus();
+  }
+
+  function closeQuickProjectMenus(exceptMenu = null) {
+    document.querySelectorAll('.quick-project-switcher').forEach((switcher) => {
+      const menu = switcher.querySelector('.quick-project-menu');
+      const toggle = switcher.querySelector('.quick-project-toggle');
+      if (menu && menu !== exceptMenu) {
+        menu.hidden = true;
+        toggle?.setAttribute('aria-expanded', 'false');
+      }
     });
   }
 
@@ -502,9 +569,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function notifyProjectChanged() {
-    if (activeName) {
-      activeName.textContent = activeProject?.name || 'Proyecto general';
-    }
+    document.querySelectorAll('[data-active-project-name]').forEach((node) => {
+      node.textContent = activeProject?.name || 'Proyecto general';
+    });
 
     window.dispatchEvent(new CustomEvent('taskcolab:projectChanged', {
       detail: {

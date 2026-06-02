@@ -2972,6 +2972,23 @@ body {
   font-weight: 700;
 }
 
+.tab span,
+.tab small {
+  display: block;
+}
+
+.tab small {
+  margin-top: 2px;
+  color: var(--tc-muted);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.2;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .user-info {
   gap: 12px;
   padding: 8px 10px;
@@ -3791,20 +3808,132 @@ body {
 .active-project-strip {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin: -4px 0 18px;
   padding: 12px 16px;
 }
 
-.active-project-strip span {
+.active-project-copy {
+  min-width: 0;
+}
+
+.active-project-copy span {
   color: var(--tc-muted);
   font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
 }
 
-.active-project-strip strong {
+.active-project-copy strong {
+  display: block;
   color: var(--tc-primary-dark);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-project-switcher {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.quick-project-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: min(320px, 78vw);
+  max-height: 330px;
+  overflow-y: auto;
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--tc-border);
+  border-radius: 12px;
+  box-shadow: var(--tc-shadow-md);
+}
+
+.quick-project-option {
+  width: 100%;
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  color: var(--tc-text);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  font-weight: 800;
+}
+
+.quick-project-option .project-color {
+  width: 34px;
+  height: 8px;
+  justify-self: start;
+}
+
+.quick-project-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--tc-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-project-option:hover,
+.quick-project-option.active {
+  background: var(--tc-primary-soft);
+}
+
+.quick-project-option strong {
+  color: var(--tc-primary-dark);
+  font-size: 11px;
+}
+
+.quick-project-empty {
+  padding: 12px;
+  color: var(--tc-muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.task-project-strip {
+  width: 90%;
+  max-width: 1100px;
+  margin: -8px auto 16px;
+}
+
+.reports-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.report-scope-control {
+  display: grid;
+  gap: 6px;
+  min-width: min(310px, 100%);
+  color: var(--tc-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.report-scope-control select {
+  min-height: 44px;
+  padding: 0 14px;
+  color: var(--tc-text);
+  background: #fff;
+  border: 1px solid var(--tc-border-strong);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 800;
 }
 
 .contenedor-tableros {

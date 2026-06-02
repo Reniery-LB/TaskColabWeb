@@ -7,6 +7,7 @@ class ReportsManager {
     this.charts = {};
     this.latestData = null;
     this.isLoading = false;
+    this.filterSelect = document.getElementById('report-project-filter');
     this.init();
   }
 
@@ -24,7 +25,7 @@ class ReportsManager {
       if (window.configurarAlerta) {
         window.configurarAlerta(
           'Exportar PDF',
-          '¿Generar un reporte ejecutivo con el estado actual del tablero?',
+          '¿Generar un reporte ejecutivo con la vista seleccionada?',
           'alerta',
           { textoConfirmar: 'Exportar', onConfirmar: exportNow }
         );
@@ -36,6 +37,42 @@ class ReportsManager {
     document.querySelectorAll('.report-kpi-card').forEach((card) => {
       card.addEventListener('click', () => this.navigateFromStats(card.dataset.action));
     });
+
+    this.populateProjectFilter();
+    this.filterSelect?.addEventListener('change', () => this.loadDashboardStats());
+    window.addEventListener('taskcolab:projectChanged', () => {
+      this.populateProjectFilter();
+    });
+  }
+
+  populateProjectFilter() {
+    if (!this.filterSelect) return;
+
+    const currentValue = this.filterSelect.value || 'general';
+    const projects = window.TaskColabProjects?.getProjects?.() || [];
+    const isAdmin = Number(window.CURRENT_USER?.is_admin || 0) === 1;
+    const generalLabel = isAdmin ? 'General - todos los proyectos' : 'General - mis proyectos';
+
+    this.filterSelect.innerHTML = [
+      `<option value="general">${generalLabel}</option>`,
+      ...projects.map(project => `<option value="project:${project.id}">${escapeHtml(project.name || 'Proyecto')}</option>`)
+    ].join('');
+
+    const hasPrevious = Array.from(this.filterSelect.options).some(option => option.value === currentValue);
+    this.filterSelect.value = hasPrevious ? currentValue : 'general';
+  }
+
+  buildQueryParams() {
+    const params = new URLSearchParams({ t: Date.now().toString() });
+    const value = this.filterSelect?.value || 'general';
+
+    if (value.startsWith('project:')) {
+      params.set('project_id', value.replace('project:', ''));
+    } else {
+      params.set('scope', 'general');
+    }
+
+    return params.toString();
   }
 
   async loadDashboardStats() {
@@ -44,7 +81,7 @@ class ReportsManager {
     try {
       this.isLoading = true;
       this.setLoadingState(true);
-      const response = await fetch(`${this.baseUrl}/get_dashboard_stats.php?t=${Date.now()}`, {
+      const response = await fetch(`${this.baseUrl}/get_dashboard_stats.php?${this.buildQueryParams()}`, {
         credentials: 'include',
         cache: 'no-cache'
       });
@@ -368,7 +405,7 @@ class ReportsManager {
     this.showToast('Generando PDF moderno...', 'info');
 
     try {
-      const response = await fetch(`${this.baseUrl}/export_pdf.php?t=${Date.now()}`, {
+      const response = await fetch(`${this.baseUrl}/export_pdf.php?${this.buildQueryParams()}`, {
         credentials: 'include',
         cache: 'no-cache'
       });
