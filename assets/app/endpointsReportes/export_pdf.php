@@ -18,6 +18,7 @@ if (!file_exists($dbPath)) die('No DB');
 
 require_once $dompdfPath;
 require_once $dbPath;
+require_once __DIR__ . '/../../models/ProjectModel.php';
 
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -29,6 +30,28 @@ $userEmail = $_SESSION['user']['email'] ?? '';
 $isAdminStmt = $pdo->prepare("SELECT is_admin FROM users WHERE id = ? AND is_active = 1");
 $isAdminStmt->execute([$userId]);
 $isAdmin = (int)$isAdminStmt->fetchColumn() === 1;
+$projectId = isset($_GET['project_id']) ? (int)$_GET['project_id'] : 0;
+$projectName = 'General';
+
+if ($projectId > 0) {
+    $projectModel = new ProjectModel();
+    $allowedProjects = $projectModel->listProjects($userId);
+    $selectedProject = null;
+
+    foreach ($allowedProjects as $project) {
+        if ((int)$project['id'] === $projectId) {
+            $selectedProject = $project;
+            break;
+        }
+    }
+
+    if (!$selectedProject) {
+        http_response_code(403);
+        die('No tienes acceso a este proyecto');
+    }
+
+    $projectName = $selectedProject['name'] ?? 'Proyecto';
+}
 
 $scopeSql = $isAdmin ? "1 = 1" : "
     EXISTS (
@@ -40,6 +63,15 @@ $scopeSql = $isAdmin ? "1 = 1" : "
 ";
 $baseWhere = "t.is_active = 1 AND {$scopeSql}";
 $params = $isAdmin ? [] : [':scope_user_id' => $userId];
+if ($projectId > 0) {
+    $baseWhere .= " AND EXISTS (
+        SELECT 1
+        FROM boards b_scope
+        WHERE b_scope.id = t.board_id
+          AND b_scope.project_id = :project_id
+    )";
+    $params[':project_id'] = $projectId;
+}
 
 $general = fetchOne($pdo, "
     SELECT
@@ -68,6 +100,18 @@ $states = normalizeStates(fetchAll($pdo, "
 
 $activeUsersScopeSql = $isAdmin ? "1 = 1" : "ta.user_id = :active_scope_user_id";
 $activeUsersParams = $isAdmin ? [] : [':active_scope_user_id' => $userId];
+$activeUsersProjectSql = "1 = 1";
+if ($projectId > 0) {
+    $activeUsersProjectSql = "
+        EXISTS (
+            SELECT 1
+            FROM boards b_active_scope
+            WHERE b_active_scope.id = t.board_id
+              AND b_active_scope.project_id = :active_project_id
+        )
+    ";
+    $activeUsersParams[':active_project_id'] = $projectId;
+}
 $users = fetchAll($pdo, "
     SELECT
         u.name AS usuario,
@@ -78,6 +122,7 @@ $users = fetchAll($pdo, "
     INNER JOIN tasks t ON t.id = ta.task_id AND t.is_active = 1
     WHERE u.is_active = 1
       AND {$activeUsersScopeSql}
+      AND {$activeUsersProjectSql}
     GROUP BY u.id, u.name
     HAVING tareas_asignadas > 0
     ORDER BY tareas_asignadas DESC
@@ -139,6 +184,7 @@ $html = buildPdfHtml([
     'userName' => $userName,
     'userEmail' => $userEmail,
     'fecha' => $fecha,
+    'scopeLabel' => $projectId > 0 ? 'Proyecto: ' . $projectName : ($isAdmin ? 'General: todos los proyectos' : 'General: mis proyectos'),
     'general' => $general,
     'productivity' => $productivity,
     'states' => $states,
@@ -267,6 +313,7 @@ h1 { font-size: 30px; margin: 6px 0 6px; }
     <div class="eyebrow">TaskColab · Reporte ejecutivo</div>
     <h1>Reporte de productividad</h1>
     <p>Generado: ' . e($data['fecha']) . '</p>
+    <p>Vista: ' . e($data['scopeLabel'] ?? 'General') . '</p>
     <p>Usuario: ' . e($data['userName']) . ' · ' . e($data['userEmail']) . '</p>
 </div>
 <table class="kpis">

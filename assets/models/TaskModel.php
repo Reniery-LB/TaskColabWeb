@@ -94,6 +94,7 @@ class TaskModel {
                             t.description,
                             t.board_id,
                             b.title as board_title,
+                            p.name as project_name,
                             t.status,
                             t.priority,
                             t.due_date,
@@ -104,6 +105,7 @@ class TaskModel {
                             GROUP_CONCAT(DISTINCT ta.user_id) as assigned_user_ids
                         FROM {$this->table} t
                         LEFT JOIN boards b ON t.board_id = b.id
+                        LEFT JOIN projects p ON p.id = b.project_id
                         LEFT JOIN {$this->assignmentsTable} ta ON t.id = ta.task_id
                         LEFT JOIN users u ON ta.user_id = u.id
                         WHERE t.is_active = 1
@@ -122,6 +124,7 @@ class TaskModel {
                             t.description,
                             t.board_id,
                             b.title as board_title,
+                            p.name as project_name,
                             t.status,
                             t.priority,
                             t.due_date,
@@ -132,6 +135,7 @@ class TaskModel {
                             GROUP_CONCAT(DISTINCT ta.user_id) as assigned_user_ids
                         FROM {$this->table} t
                         LEFT JOIN boards b ON t.board_id = b.id
+                        LEFT JOIN projects p ON p.id = b.project_id
                         LEFT JOIN {$this->assignmentsTable} ta ON t.id = ta.task_id
                         LEFT JOIN users u ON ta.user_id = u.id
                         WHERE t.is_active = 1
@@ -174,11 +178,12 @@ class TaskModel {
         try {
             if ($userId) {
                 // Si se proporciona userId, verificar permisos
-                $sql = "SELECT t.*, b.title as board_title, 
+                $sql = "SELECT t.*, b.title as board_title, p.name as project_name,
                             GROUP_CONCAT(DISTINCT u.name) as assigned_users,
                             GROUP_CONCAT(DISTINCT u.id) as assigned_user_ids
                         FROM tasks t
                         LEFT JOIN boards b ON t.board_id = b.id
+                        LEFT JOIN projects p ON p.id = b.project_id
                         LEFT JOIN task_assignments ta ON t.id = ta.task_id
                         LEFT JOIN users u ON ta.user_id = u.id
                         WHERE t.id = :task_id 
@@ -194,11 +199,12 @@ class TaskModel {
                 ]);
             } else {
                 // Si NO se proporciona userId, obtener sin verificar permisos
-                $sql = "SELECT t.*, b.title as board_title, 
+                $sql = "SELECT t.*, b.title as board_title, p.name as project_name,
                             GROUP_CONCAT(DISTINCT u.name) as assigned_users,
                             GROUP_CONCAT(DISTINCT u.id) as assigned_user_ids
                         FROM tasks t
                         LEFT JOIN boards b ON t.board_id = b.id
+                        LEFT JOIN projects p ON p.id = b.project_id
                         LEFT JOIN task_assignments ta ON t.id = ta.task_id
                         LEFT JOIN users u ON ta.user_id = u.id
                         WHERE t.id = :task_id 
@@ -474,9 +480,11 @@ class TaskModel {
                     t.created_at,
                     t.updated_at,
                     b.title as board_title,
+                    p.name as project_name,
                     t.created_by
                 FROM tasks t
                 LEFT JOIN boards b ON t.board_id = b.id
+                LEFT JOIN projects p ON p.id = b.project_id
                 INNER JOIN task_assignments ta ON t.id = ta.task_id
                 WHERE t.is_active = 1
                 AND ta.user_id = :user_id

@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
 
       if (!tasks || tasks.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#666;">No hay tareas asignadas</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#666;">No hay tareas asignadas</td></tr>';
           return;
       }
 
@@ -240,6 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
               status: task.status,
               priority: task.priority,
               due_date: task.due_date,
+              project_name: task.project_name,
               board_title: task.board_title,
               assigned_users: task.assigned_users
           });
@@ -248,8 +249,9 @@ document.addEventListener('DOMContentLoaded', function() {
       tbody.innerHTML = tasks.map(task => `
           <tr data-task-id="${task.id}">
               <td><div class="check-cuadro" data-task-id="${task.id}"></div></td>
-              <td>${escapeHtml(task.description || task.title || 'Sin descripción')}</td> <!-- DESCRIPCIÓN en columna Tarea -->
-              <td>${escapeHtml(task.title || 'Sin título')}</td> <!-- TÍTULO en columna Tablero -->
+              <td>${escapeHtml(task.description || task.title || 'Sin descripción')}</td>
+              <td>${escapeHtml(task.title || 'Sin título')}</td>
+              <td>${escapeHtml(task.project_name || window.TaskColabProjects?.getActiveProject?.()?.name || 'Proyecto general')}</td>
               <td>${task.status}</td>
               <td class="fecha">${formatDate(task.due_date)}</td>
               <td>${escapeHtml(task.assigned_users || 'Sin asignar')}</td>

@@ -28,10 +28,34 @@ if ($userId <= 0) {
 
 try {
     require_once __DIR__ . '/../../../config/db.php';
+    require_once __DIR__ . '/../../models/ProjectModel.php';
 
     $isAdminStmt = $pdo->prepare("SELECT is_admin FROM users WHERE id = ? AND is_active = 1");
     $isAdminStmt->execute([$userId]);
     $isAdmin = (int)$isAdminStmt->fetchColumn() === 1;
+    $projectId = isset($_GET['project_id']) ? (int)$_GET['project_id'] : 0;
+    $projectName = 'General';
+
+    if ($projectId > 0) {
+        $projectModel = new ProjectModel();
+        $allowedProjects = $projectModel->listProjects($userId);
+        $selectedProject = null;
+
+        foreach ($allowedProjects as $project) {
+            if ((int)$project['id'] === $projectId) {
+                $selectedProject = $project;
+                break;
+            }
+        }
+
+        if (!$selectedProject) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'No tienes acceso a este proyecto']);
+            exit;
+        }
+
+        $projectName = $selectedProject['name'] ?? 'Proyecto';
+    }
 
     $scopeSql = $isAdmin ? "1 = 1" : "
         EXISTS (
@@ -47,6 +71,15 @@ try {
     $params = [];
     if (!$isAdmin) {
         $params[':scope_user_id'] = $userId;
+    }
+    if ($projectId > 0) {
+        $baseWhere .= " AND EXISTS (
+            SELECT 1
+            FROM boards b_scope
+            WHERE b_scope.id = t.board_id
+              AND b_scope.project_id = :project_id
+        )";
+        $params[':project_id'] = $projectId;
     }
 
     $general = fetchOne($pdo, "
@@ -77,6 +110,18 @@ try {
 
     $activeUsersScopeSql = $isAdmin ? "1 = 1" : "ta.user_id = :active_scope_user_id";
     $activeUsersParams = $isAdmin ? [] : [':active_scope_user_id' => $userId];
+    $activeUsersProjectSql = "1 = 1";
+    if ($projectId > 0) {
+        $activeUsersProjectSql = "
+            EXISTS (
+                SELECT 1
+                FROM boards b_active_scope
+                WHERE b_active_scope.id = t.board_id
+                  AND b_active_scope.project_id = :active_project_id
+            )
+        ";
+        $activeUsersParams[':active_project_id'] = $projectId;
+    }
     $activeUsers = fetchAll($pdo, "
         SELECT
             u.id,
@@ -90,6 +135,7 @@ try {
         INNER JOIN tasks t ON t.id = ta.task_id AND t.is_active = 1
         WHERE u.is_active = 1
           AND {$activeUsersScopeSql}
+          AND {$activeUsersProjectSql}
         GROUP BY u.id, u.name, u.email
         HAVING tareas_asignadas > 0
         ORDER BY tareas_asignadas DESC, tareas_completadas DESC
@@ -169,6 +215,12 @@ try {
     echo json_encode([
         'success' => true,
         'data' => [
+            'scope' => [
+                'type' => $projectId > 0 ? 'project' : 'general',
+                'project_id' => $projectId > 0 ? $projectId : null,
+                'project_name' => $projectName,
+                'is_admin' => $isAdmin,
+            ],
             'general_stats' => [
                 'total_tareas' => (int)$general['total_tareas'],
                 'pendiente' => (int)$general['pendiente'],

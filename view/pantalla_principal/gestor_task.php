@@ -8,7 +8,7 @@
   <title>Gestor de Tareas</title>
   <link rel="icon" type="image/png" href="../../assets/img/logo.png">
   <link rel="apple-touch-icon" href="../../assets/img/logo.png">
-  <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260525-1">
+  <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260601-2">
 </head>
 <body>
   <!-- CONTENIDO PRINCIPAL -->
@@ -202,8 +202,16 @@
         <p id="board-summary">Cargando tareas del tablero...</p>
       </div>
       <div class="active-project-strip" id="active-project-strip">
-        <span>Proyecto activo</span>
-        <strong id="active-project-name">Proyecto general</strong>
+        <div class="active-project-copy">
+          <span>Proyecto activo</span>
+          <strong id="active-project-name" data-active-project-name>Proyecto general</strong>
+        </div>
+        <div class="quick-project-switcher">
+          <button type="button" class="project-header-action quick-project-toggle" aria-expanded="false">Cambiar proyecto</button>
+          <div class="quick-project-menu" hidden>
+            <div class="quick-project-empty">Cargando proyectos...</div>
+          </div>
+        </div>
       </div>
       <div class="contenedor-tableros">
         <div class="columna columna-pending">
@@ -265,9 +273,9 @@
 
           <label for="prioridad-tarjeta">Prioridad:</label>
           <select id="prioridad-tarjeta" name="prioridad-tarjeta">
-            <option value="Media prioridad" selected>Media prioridad</option>
-            <option value="Alta prioridad">Alta prioridad</option>
-            <option value="Baja prioridad">Baja prioridad</option>
+            <option value="Media" selected>Media</option>
+            <option value="Alta">Alta</option>
+            <option value="Baja">Baja</option>
           </select>
 
           <label for="fecha-tarjeta">Fecha límite:</label>
@@ -316,6 +324,18 @@
     <!-- TAREAS -->
     <section id="tareas" class="seccion">
       <h2 class="titulo-tareas">Tareas</h2>
+      <div class="active-project-strip task-project-strip">
+        <div class="active-project-copy">
+          <span>Proyecto asignado</span>
+          <strong data-active-project-name>Proyecto general</strong>
+        </div>
+        <div class="quick-project-switcher">
+          <button type="button" class="project-header-action quick-project-toggle" aria-expanded="false">Cambiar proyecto</button>
+          <div class="quick-project-menu" hidden>
+            <div class="quick-project-empty">Cargando proyectos...</div>
+          </div>
+        </div>
+      </div>
       <div class="encabezado-tareas">
         <button id="btn-borrar-tareas" class="btn-basura" style="display: none;">
           <img src="../../assets/img/basura.png" alt="Eliminar tareas" />
@@ -329,8 +349,9 @@
           <thead>
             <tr>
               <th> <img src="../../assets/img/seleccion.png" class="icono-completado" alt="Completado"></th>
-              <th>Tarea</th>
-              <th>Tablero</th>
+              <th>Descripción</th>
+              <th>Título de la tarea</th>
+              <th>Proyecto</th>
               <th>Estado</th>
               <th>Fecha límite</th>
               <th><img src="../../assets/img/icono-usuario.png" class="icono-completado" alt="Completado"></th>
@@ -339,7 +360,7 @@
           <tbody>
             <!-- LAS FILAS SE CARGARÁN DINÁMICAMENTE CON JAVASCRIPT -->
             <tr>
-              <td colspan="6" style="text-align:center; color:#666;">
+              <td colspan="7" style="text-align:center; color:#666;">
                 Cargando tareas...
               </td>
             </tr>
@@ -433,7 +454,15 @@
           <h2 class="titulo-reportes">Reportes</h2>
           <p class="descripcion-reportes">Mide avance, carga del equipo y riesgos próximos con una vista ejecutiva.</p>
         </div>
-        <button id="btn-exportar-pdf" class="btn-exportar" type="button">Exportar PDF</button>
+        <div class="reports-actions">
+          <label class="report-scope-control" for="report-project-filter">
+            <span>Vista</span>
+            <select id="report-project-filter">
+              <option value="general">General</option>
+            </select>
+          </label>
+          <button id="btn-exportar-pdf" class="btn-exportar" type="button">Exportar PDF</button>
+        </div>
       </div>
 
       <div class="report-kpi-grid">
@@ -1059,11 +1088,11 @@
   <script src="../../assets/javascript/menu.js?v=20260529-prod1" defer></script>
   <script src="../../assets/javascript/admin.js?v=20260529-prod1" defer></script>
   <script src="../../assets/javascript/users.js?v=20260516-3" defer></script>
-  <script src="../../assets/javascript/projects.js?v=20260525-1" defer></script>
-  <script src="../../assets/javascript/tasks.js?v=20260520-1" defer></script>
-  <script src="../../assets/javascript/boards.js?v=20260529-prod1" defer></script>
+  <script src="../../assets/javascript/projects.js?v=20260601-2" defer></script>
+  <script src="../../assets/javascript/tasks.js?v=20260601-1" defer></script>
+  <script src="../../assets/javascript/boards.js?v=20260601-1" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" defer></script>
-  <script src="../../assets/javascript/reports.js?v=20260529-prod1" defer></script>
+  <script src="../../assets/javascript/reports.js?v=20260601-1" defer></script>
   <script src="../../assets/javascript/chat.js?v=20260529-prod1" defer></script>
   <script src="../../assets/javascript/profile.js?v=20260529-prod1" defer></script>
 </body>

@@ -47,6 +47,34 @@ try {
         throw new Exception('Contraseña incorrecta');
     }
 
+    $pendingStmt = $pdo->prepare("
+        SELECT
+            COUNT(DISTINCT t.id) AS total,
+            GROUP_CONCAT(DISTINCT t.title ORDER BY t.due_date IS NULL, t.due_date ASC, t.title ASC SEPARATOR ', ') AS task_titles
+        FROM tasks t
+        INNER JOIN task_assignments ta ON ta.task_id = t.id
+        WHERE ta.user_id = ?
+          AND t.is_active = 1
+          AND t.status IN ('pending', 'in_progress')
+    ");
+    $pendingStmt->execute([$userId]);
+    $pendingWork = $pendingStmt->fetch(PDO::FETCH_ASSOC) ?: ['total' => 0, 'task_titles' => ''];
+    $pendingTotal = (int)($pendingWork['total'] ?? 0);
+
+    if ($pendingTotal > 0) {
+        $sampleTitles = trim((string)($pendingWork['task_titles'] ?? ''));
+        if (mb_strlen($sampleTitles, 'UTF-8') > 180) {
+            $sampleTitles = mb_substr($sampleTitles, 0, 180, 'UTF-8') . '...';
+        }
+
+        throw new Exception(
+            'No puedes eliminar tu cuenta porque tienes ' . $pendingTotal .
+            ' tarea(s) o tarjeta(s) pendientes/en proceso asignadas' .
+            ($sampleTitles !== '' ? ': ' . $sampleTitles : '.') .
+            ' Finalízalas o reasígnalas antes de eliminar la cuenta.'
+        );
+    }
+
     // ELIMINACIÓN SEGURA - Marcar como inactivo en lugar de borrar
     $stmt = $pdo->prepare("UPDATE users SET is_active = 0, notes = CONCAT(IFNULL(notes, ''), ' - Cuenta eliminada el ', NOW()) WHERE id = ?");
     $result = $stmt->execute([$userId]);

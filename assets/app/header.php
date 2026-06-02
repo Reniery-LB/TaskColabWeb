@@ -58,7 +58,10 @@ $UPLOADS_BASE = app_url('assets/uploads');
       <a href="<?php echo $logoutLink; ?>" class="header-logo-logout-link" aria-label="Cerrar sesión"><img src="<?php echo $imgBase; ?>/logo.png" width="30" alt="logo_tareas" class="logo"></a>
     </div>
     <div class="tab-container">
-      <h2 class="tab">Espacio de trabajo</h2>
+      <h2 class="tab">
+        <span>Espacio de trabajo</span>
+        <small data-active-project-name>Proyecto general</small>
+      </h2>
       <!-- <button class="add-tab">+</button> -->
     </div>
   </div>
