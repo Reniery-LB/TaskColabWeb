@@ -201,10 +201,11 @@ try {
         GROUP BY t.id, t.title, t.description, t.status, t.priority, t.due_date, b.title
         ORDER BY
             CASE
-                WHEN t.due_date IS NOT NULL AND t.due_date < CURDATE() THEN 0
-                WHEN t.priority = 'high' THEN 1
-                WHEN t.due_date IS NOT NULL THEN 2
-                ELSE 3
+                WHEN t.due_date = CURDATE() THEN 0
+                WHEN t.due_date > CURDATE() AND t.due_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 1
+                WHEN t.due_date IS NOT NULL AND t.due_date < CURDATE() THEN 2
+                WHEN t.priority = 'high' THEN 3
+                ELSE 4
             END,
             t.due_date ASC,
             t.priority ASC
@@ -325,8 +326,8 @@ function normalizePriorityHeatmap(array $rows): array {
     $buckets = [
         'overdue' => 'Atrasadas',
         'today' => 'Hoy',
-        'week' => '7 días',
-        'later' => 'Después',
+        'week' => 'Próximos 7 días',
+        'later' => 'Mayor a 7 días',
         'no_date' => 'Sin fecha',
     ];
 
@@ -363,6 +364,7 @@ function enrichAlerts(array $tasks): array {
     $priorityLabels = ['high' => 'Alta', 'medium' => 'Media', 'low' => 'Baja'];
     $statusLabels = ['pending' => 'Pendiente', 'in_progress' => 'En proceso', 'done' => 'Completado'];
     $today = new DateTimeImmutable('today');
+    $nextWeek = $today->modify('+7 days');
 
     foreach ($tasks as &$task) {
         $dueDate = !empty($task['due_date']) ? new DateTimeImmutable($task['due_date']) : null;
@@ -375,9 +377,9 @@ function enrichAlerts(array $tasks): array {
         } elseif ($dueDate && $dueDate == $today) {
             $alertType = 'today';
             $alertLabel = 'Vence hoy';
-        } elseif ($dueDate) {
+        } elseif ($dueDate && $dueDate <= $nextWeek) {
             $alertType = 'soon';
-            $alertLabel = 'Próxima';
+            $alertLabel = 'Vence en 7 días';
         }
 
         $task['priority_display'] = $priorityLabels[$task['priority']] ?? $task['priority'];

@@ -173,12 +173,21 @@ $alerts = enrichAlerts(fetchAll($pdo, "
         OR t.priority = 'high'
       )
     GROUP BY t.id, t.title, t.status, t.priority, t.due_date, b.title
-    ORDER BY t.due_date ASC
+    ORDER BY
+        CASE
+            WHEN t.due_date = CURDATE() THEN 0
+            WHEN t.due_date > CURDATE() AND t.due_date <= DATE_ADD(CURDATE(), INTERVAL 7 DAY) THEN 1
+            WHEN t.due_date IS NOT NULL AND t.due_date < CURDATE() THEN 2
+            WHEN t.priority = 'high' THEN 3
+            ELSE 4
+        END,
+        t.due_date ASC,
+        t.priority ASC
     LIMIT 10
 ", $params));
 
 $fecha = date('d/m/Y H:i');
-$pdfFileName = 'reporte_taskcolab_' . date('Y-m-d_His') . '.pdf';
+$pdfFileName = 'analiticas_taskcolab_' . date('Y-m-d_His') . '.pdf';
 
 $html = buildPdfHtml([
     'userName' => $userName,
@@ -262,7 +271,7 @@ function buildPdfHtml(array $data): string {
             </tr>';
     }
     if ($alertRows === '') {
-        $alertRows = '<tr><td colspan="5" class="empty-cell">Sin alertas críticas por ahora.</td></tr>';
+        $alertRows = '<tr><td colspan="5" class="empty-cell">Sin estados críticos de tarea por ahora.</td></tr>';
     }
 
     return '<!DOCTYPE html>
@@ -310,8 +319,8 @@ h1 { font-size: 30px; margin: 6px 0 6px; }
 </head>
 <body>
 <div class="cover">
-    <div class="eyebrow">TaskColab · Reporte ejecutivo</div>
-    <h1>Reporte de productividad</h1>
+    <div class="eyebrow">TaskColab · Analíticas</div>
+    <h1>Analíticas de productividad</h1>
     <p>Generado: ' . e($data['fecha']) . '</p>
     <p>Vista: ' . e($data['scopeLabel'] ?? 'General') . '</p>
     <p>Usuario: ' . e($data['userName']) . ' · ' . e($data['userEmail']) . '</p>
@@ -329,16 +338,16 @@ h1 { font-size: 30px; margin: 6px 0 6px; }
     <td><div class="panel"><h2>Distribución por estado</h2>' . $stateBars . '</div></td>
     <td><div class="panel"><h2>Tareas por usuario</h2>' . $userRows . '</div></td>
 </tr></table>
-<div class="section panel"><h2>Completadas por semana</h2>' . $weekRows . '</div>
+<div class="section panel"><h2>Tareas completadas por semana</h2>' . $weekRows . '</div>
 <div class="section panel"><h2>Carga por prioridad y vencimiento</h2>
     <table class="heatmap">
-        <tr><th>Prioridad</th><th>Atrasadas</th><th>Hoy</th><th>7 días</th><th>Después</th><th>Sin fecha</th></tr>
+        <tr><th>Prioridad</th><th>Atrasadas</th><th>Hoy</th><th>Próximos 7 días</th><th>Mayor a 7 días</th><th>Sin fecha</th></tr>
         ' . $heatRows . '
     </table>
 </div>
-<div class="section panel"><h2>Alertas de tareas</h2>
+<div class="section panel"><h2>Estados críticos de tareas</h2>
     <table class="alerts">
-        <tr><th>Alerta</th><th>Tarea</th><th>Responsable</th><th>Fecha</th><th>Prioridad</th></tr>
+        <tr><th>Estado</th><th>Tarea</th><th>Responsable</th><th>Fecha</th><th>Prioridad</th></tr>
         ' . $alertRows . '
     </table>
 </div>
@@ -418,6 +427,7 @@ function normalizePriorityHeatmap(array $rows): array {
 function enrichAlerts(array $tasks): array {
     $priorityLabels = ['high' => 'Alta', 'medium' => 'Media', 'low' => 'Baja'];
     $today = new DateTimeImmutable('today');
+    $nextWeek = $today->modify('+7 days');
     foreach ($tasks as &$task) {
         $due = !empty($task['due_date']) ? new DateTimeImmutable($task['due_date']) : null;
         $type = 'priority';
@@ -428,9 +438,9 @@ function enrichAlerts(array $tasks): array {
         } elseif ($due && $due == $today) {
             $type = 'today';
             $label = 'Vence hoy';
-        } elseif ($due) {
+        } elseif ($due && $due <= $nextWeek) {
             $type = 'soon';
-            $label = 'Próxima';
+            $label = 'Vence en 7 días';
         }
         $task['priority_display'] = $priorityLabels[$task['priority']] ?? $task['priority'];
         $task['due_date_display'] = $due ? $due->format('d/m/Y') : 'Sin fecha';

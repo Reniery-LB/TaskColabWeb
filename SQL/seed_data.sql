@@ -630,7 +630,9 @@ VALUES
   (135,113,'Video corto de demostración','Guion y capturas del flujo: proyecto, tarea, chat y reporte.', 'pending','low','2026-06-10',8,'2026-05-20 09:00:00',3,'pending'),
   (136,114,'Revisar exposición de errores PHP','Ocultar errores internos y registrar logs en servidor.', 'done','high','2026-05-21',102,'2026-05-18 11:00:00',1,'pending'),
   (137,114,'Auditar endpoints sin sesión','Confirmar que endpoints privados validen usuario autenticado.', 'in_progress','high','2026-05-31',102,'2026-05-20 10:00:00',2,'in_progress'),
-  (138,114,'Checklist HTTPS y cookies','Forzar HTTPS, revisar flags secure/httponly y CORS para móvil.', 'pending','high','2026-06-08',106,'2026-05-22 09:00:00',3,'pending');
+  (138,114,'Checklist HTTPS y cookies','Forzar HTTPS, revisar flags secure/httponly y CORS para móvil.', 'pending','high','2026-06-08',106,'2026-05-22 09:00:00',3,'pending'),
+  (901,10,'Revisar tareas que vencen hoy','Dato demo para mostrar la situación Vence hoy en analíticas.', 'pending','medium',CURDATE(),1,NOW(),7,'pending'),
+  (902,10,'Preparar entregables de la próxima semana','Dato demo para mostrar la situación Vence en 7 días en analíticas.', 'in_progress','high',DATE_ADD(CURDATE(), INTERVAL 7 DAY),1,NOW(),8,'in_progress');
 
 -- ----------------------------------------------------------------
 -- ASIGNACIONES EXTRA
@@ -646,7 +648,8 @@ INSERT IGNORE INTO task_assignments (task_id, user_id, assigned_at) VALUES
   (125,105,'2026-05-11 10:05:00'), (126,105,'2026-05-13 09:05:00'), (127,3,'2026-05-27 09:05:00'),
   (128,110,'2026-05-12 11:05:00'), (128,102,'2026-05-12 11:10:00'), (129,102,'2026-05-14 11:05:00'), (130,4,'2026-05-16 10:05:00'), (130,110,'2026-05-16 10:10:00'),
   (131,110,'2026-05-13 11:05:00'), (132,110,'2026-05-15 12:05:00'), (133,103,'2026-05-15 12:05:00'), (134,109,'2026-05-17 10:05:00'), (135,8,'2026-05-20 09:05:00'),
-  (136,102,'2026-05-18 11:05:00'), (137,102,'2026-05-20 10:05:00'), (137,104,'2026-05-20 10:10:00'), (138,106,'2026-05-22 09:05:00');
+  (136,102,'2026-05-18 11:05:00'), (137,102,'2026-05-20 10:05:00'), (137,104,'2026-05-20 10:10:00'), (138,106,'2026-05-22 09:05:00'),
+  (901,1,NOW()), (901,4,NOW()), (902,1,NOW()), (902,4,NOW());
 
 -- ----------------------------------------------------------------
 -- TAGS DE TAREAS EXTRA
