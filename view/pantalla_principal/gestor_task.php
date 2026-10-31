@@ -5,7 +5,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestor de Tareas</title>
+  <title>Gestor de Proyectos</title>
   <link rel="icon" type="image/png" href="../../assets/img/logo.png">
   <link rel="apple-touch-icon" href="../../assets/img/logo.png">
   <link rel="stylesheet" href="../../assets/styles/pantallas.css?v=20260601-2">
@@ -326,7 +326,7 @@
       <h2 class="titulo-tareas">Tareas</h2>
       <div class="active-project-strip task-project-strip">
         <div class="active-project-copy">
-          <span>Proyecto asignado</span>
+          <span>Proyecto activo</span>
           <strong data-active-project-name>Proyecto general</strong>
         </div>
         <div class="quick-project-switcher">
@@ -450,8 +450,8 @@
     <div id="reportes" class="seccion">
       <div class="reports-hero">
         <div>
-          <span class="section-kicker">Analítica operativa</span>
-          <h2 class="titulo-reportes">Reportes</h2>
+          <span class="section-kicker"></span>
+          <h2 class="titulo-reportes">Analíticas</h2>
           <p class="descripcion-reportes">Mide avance, carga del equipo y riesgos próximos con una vista ejecutiva.</p>
         </div>
         <div class="reports-actions">
@@ -498,7 +498,7 @@
           <div class="report-panel-head">
             <div>
               <span class="section-kicker">Estado</span>
-              <h3>Distribución de tareas</h3>
+              <h3>Distribución de tareas por estado</h3>
             </div>
           </div>
           <div class="chart-box">
@@ -525,7 +525,7 @@
           <div class="report-panel-head">
             <div>
               <span class="section-kicker">Ritmo</span>
-              <h3>Completadas por semana</h3>
+              <h3>Tareas completadas por semana</h3>
             </div>
           </div>
           <div class="chart-box chart-box-wide">
@@ -538,7 +538,7 @@
           <div class="report-panel-head">
             <div>
               <span class="section-kicker">Carga</span>
-              <h3>Prioridad por vencimiento</h3>
+              <h3>Vencimiento por prioridad de tareas</h3>
             </div>
           </div>
           <div id="report-priority-heatmap" class="report-heatmap"></div>
@@ -548,7 +548,7 @@
           <div class="report-panel-head">
             <div>
               <span class="section-kicker">Riesgos</span>
-              <h3>Alertas de tareas</h3>
+              <h3>Estados críticos de tareas</h3>
             </div>
           </div>
           <div id="report-alerts-table" class="report-alerts-table"></div>

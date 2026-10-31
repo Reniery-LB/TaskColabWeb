@@ -115,7 +115,7 @@ $UPLOADS_BASE = app_url('assets/uploads');
   <a href="#" data-section="proyectos">Proyectos <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
   <a href="#" data-section="tableros">Tableros <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
   <a href="#" data-section="tareas">Tareas <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
-  <a href="#" data-section="reportes">Reportes <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
+  <a href="#" data-section="reportes">Analíticas <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
   <a href="#" data-section="usuarios">Usuarios <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>
   <?php if ($isAdmin): ?>
     <a href="#" data-section="admin">Admin <img class="nav-arrow" src="<?php echo $imgBase; ?>/flecha.png" alt=""></a>

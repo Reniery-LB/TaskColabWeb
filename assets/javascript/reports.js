@@ -25,7 +25,7 @@ class ReportsManager {
       if (window.configurarAlerta) {
         window.configurarAlerta(
           'Exportar PDF',
-          '¿Generar un reporte ejecutivo con la vista seleccionada?',
+          '¿Generar una analítica ejecutiva con la vista seleccionada?',
           'alerta',
           { textoConfirmar: 'Exportar', onConfirmar: exportNow }
         );
@@ -88,14 +88,14 @@ class ReportsManager {
       const result = await response.json();
 
       if (!response.ok || !result.success) {
-        throw new Error(result.error || 'No se pudieron cargar los reportes');
+        throw new Error(result.error || 'No se pudieron cargar las analíticas');
       }
 
       this.latestData = result.data;
       this.renderDashboard(result.data);
     } catch (error) {
-      console.error('Error cargando reportes:', error);
-      this.showToast('Error al cargar reportes', 'error');
+      console.error('Error cargando analíticas:', error);
+      this.showToast('Error al cargar analíticas', 'error');
       this.renderDashboard(this.fallbackData());
     } finally {
       this.setLoadingState(false);
@@ -292,9 +292,9 @@ class ReportsManager {
         <div class="report-heatmap-row">
           <strong>${escapeHtml(row.label)}</strong>
           ${(row.cells || []).map(cell => {
-            const intensity = Math.max(0.08, Number(cell.value || 0) / max);
-            return `<span style="--heat:${intensity}" title="${escapeHtml(row.label)} · ${escapeHtml(cell.label)}: ${cell.value}">${cell.value}</span>`;
-          }).join('')}
+      const intensity = Math.max(0.08, Number(cell.value || 0) / max);
+      return `<span style="--heat:${intensity}" title="${escapeHtml(row.label)} · ${escapeHtml(cell.label)}: ${cell.value}">${cell.value}</span>`;
+    }).join('')}
         </div>
       `).join('')}
     `;
@@ -305,7 +305,7 @@ class ReportsManager {
     if (!container) return;
 
     if (!tasks.length) {
-      container.innerHTML = '<div class="report-empty">Sin alertas críticas por ahora.</div>';
+      container.innerHTML = '<div class="report-empty">Sin estados críticos de tareas por ahora.</div>';
       return;
     }
 
@@ -313,7 +313,7 @@ class ReportsManager {
       <table>
         <thead>
           <tr>
-            <th>Alerta</th>
+            <th>Estado</th>
             <th>Tarea</th>
             <th>Responsable</th>
             <th>Fecha</th>
@@ -423,7 +423,7 @@ class ReportsManager {
 
       const disposition = response.headers.get('Content-Disposition') || '';
       const match = disposition.match(/filename="?([^"]+)"?/i);
-      const filename = match?.[1] || `reporte_taskcolab_${new Date().toISOString().slice(0, 10)}.pdf`;
+      const filename = match?.[1] || `analiticas_taskcolab_${new Date().toISOString().slice(0, 10)}.pdf`;
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -458,7 +458,7 @@ class ReportsManager {
       ],
       active_users: [],
       completed_by_week: [],
-      priority_heatmap: { buckets: ['Atrasadas', 'Hoy', '7 días', 'Después', 'Sin fecha'], rows: [] },
+      priority_heatmap: { buckets: ['Atrasadas', 'Hoy', '7 días', 'Mayor a 7 días', 'Sin fecha'], rows: [] },
       alert_tasks: []
     };
   }
